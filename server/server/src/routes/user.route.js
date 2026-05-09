@@ -16,6 +16,7 @@ import {
     getFreelancers,
     getProfileData,
     updateAvatar,
+    updateCv,
     updateProfileTags,
     updateAbout,
     updateHourlyRate,
@@ -29,6 +30,7 @@ import {
     getSingleTransaction,
     getNotifications,
     markAsRead,
+    getDashboardAnalytics,
 } from "../controllers/index.js";
 
 const userRoute = Router();
@@ -61,6 +63,13 @@ userRoute.post(
     updateAvatar,
 );
 
+userRoute.post(
+    "/update-cv",
+    authenticate,
+    upload.single("cv"),
+    updateCv,
+);
+
 userRoute.post("/update-profile-tags", authenticate, updateProfileTags);
 userRoute.post("/update-about", authenticate, updateAbout);
 userRoute.post("/generate-about", authenticate, generateAboutDescription);
@@ -77,5 +86,7 @@ userRoute.get("/followers/:targetId", getFollowers);
 userRoute.get("/following/:targetId", getFollowing);
 
 userRoute.get("/profiles/:userId", getProfileData);
+
+userRoute.get("/analytics", authenticate, verified, getDashboardAnalytics);
 
 export { userRoute };

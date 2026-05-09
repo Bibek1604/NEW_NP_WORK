@@ -90,77 +90,115 @@ export const buildContractSnapshot = ({ job, milestones = [] }) => {
         completedMilestoneBudget,
         remainingCost,
         initialPaymentAmount,
-        paymentTerms: DEFAULT_PAYMENT_TERMS,
+        paymentTerms: job?.contract?.paymentTerms || DEFAULT_PAYMENT_TERMS,
         timelineStart,
         timelineEnd,
         milestones: normalizedMilestones,
         paymentSchedule,
+        responsibilities: job?.contract?.responsibilities || {
+            client: "Provide necessary requirements, feedback, and timely payments as per the agreed milestones.",
+            freelancer: "Execute the project scope with professional diligence, meeting the specified quality standards and deadlines.",
+        },
+        confidentialityClause: job?.contract?.confidentialityClause || "Both parties agree to keep all project-related sensitive information confidential and not disclose it to third parties without prior consent.",
+        terminationClause: job?.contract?.terminationClause || "Either party may terminate the contract with a 7-day notice if the other party fails to meet their responsibilities. Any work completed up to that point must be compensated.",
     };
 };
 
 export const buildContractPdfLines = ({ job, client, freelancer, snapshot }) => {
     const lines = [];
 
+    // Branding / Header
+    lines.push({ text: "NEPWORK - FREELANCE PLATFORM", font: "bold", size: 14 });
+    lines.push({ text: "Quality | Trust | Delivery", font: "regular", size: 9 });
+    lines.push({ text: "------------------------------------------------------------------------------------------", font: "regular", size: 10 });
+    lines.push({ text: "", font: "regular", size: 10 });
+
     lines.push({ text: "PROJECT CONTRACT AGREEMENT", font: "bold", size: 18 });
-    lines.push({ text: `Project: ${job.title}`, font: "bold", size: 12 });
-    lines.push({ text: `Generated on: ${new Date().toLocaleString()}`, font: "regular", size: 10 });
-    lines.push({ text: `Contract status: ${job.contract?.status || "draft"}`, font: "regular", size: 10 });
+    lines.push({ text: `Contract ID: ${job._id.toString().toUpperCase()}`, font: "regular", size: 9 });
+    lines.push({ text: `Date: ${new Date().toLocaleDateString()}`, font: "regular", size: 10 });
     lines.push({ text: "", font: "regular", size: 10 });
 
-    lines.push({ text: "CLIENT DETAILS", font: "bold", size: 13 });
-    lines.push({ text: `Name: ${client?.name?.firstName || ""} ${client?.name?.lastName || ""}`.trim(), font: "regular", size: 10 });
-    lines.push({ text: `Email: ${client?.email || "N/A"}`, font: "regular", size: 10 });
-    lines.push({ text: `Role: Client`, font: "regular", size: 10 });
+    // 1. Parties
+    lines.push({ text: "1. PARTIES TO THE AGREEMENT", font: "bold", size: 13 });
+    lines.push({ text: `1.1 CLIENT: ${client?.name?.firstName || ""} ${client?.name?.lastName || ""}`.trim(), font: "regular", size: 10 });
+    lines.push({ text: `    Email: ${client?.email || "N/A"}`, font: "regular", size: 10 });
+    lines.push({ text: `1.2 FREELANCER: ${freelancer?.name?.firstName || ""} ${freelancer?.name?.lastName || ""}`.trim(), font: "regular", size: 10 });
+    lines.push({ text: `    Email: ${freelancer?.email || "N/A"}`, font: "regular", size: 10 });
     lines.push({ text: "", font: "regular", size: 10 });
 
-    lines.push({ text: "FREELANCER DETAILS", font: "bold", size: 13 });
-    lines.push({ text: `Name: ${freelancer?.name?.firstName || ""} ${freelancer?.name?.lastName || ""}`.trim(), font: "regular", size: 10 });
-    lines.push({ text: `Email: ${freelancer?.email || "N/A"}`, font: "regular", size: 10 });
-    lines.push({ text: `Role: Freelancer`, font: "regular", size: 10 });
-    lines.push({ text: "", font: "regular", size: 10 });
-
-    lines.push({ text: "PROJECT DETAILS", font: "bold", size: 13 });
-    lines.push({ text: `Title: ${job.title}`, font: "regular", size: 10 });
-    wrapText(job.description || "").forEach((line) => {
-        lines.push({ text: `Scope: ${line}`, font: "regular", size: 10 });
+    // 2. Project Scope
+    lines.push({ text: "2. PROJECT OVERVIEW & SCOPE", font: "bold", size: 13 });
+    lines.push({ text: `2.1 Project Title: ${job.title}`, font: "bold", size: 10 });
+    lines.push({ text: "2.2 Description of Services:", font: "regular", size: 10 });
+    wrapText(job.description || "", 85).forEach((line) => {
+        lines.push({ text: `    ${line}`, font: "regular", size: 10 });
     });
-    lines.push({ text: `Total budget: ${formatCurrency(snapshot.totalCost)}`, font: "regular", size: 10 });
-    lines.push({ text: `Approved milestone value: ${formatCurrency(snapshot.approvedMilestoneBudget)}`, font: "regular", size: 10 });
-    lines.push({ text: `Remaining project cost: ${formatCurrency(snapshot.remainingCost)}`, font: "regular", size: 10 });
-    lines.push({ text: `Initial payment: ${formatCurrency(snapshot.initialPaymentAmount)} (10%)`, font: "regular", size: 10 });
-    lines.push({ text: `Timeline: ${snapshot.timelineStart.toLocaleDateString()} to ${snapshot.timelineEnd.toLocaleDateString()}`, font: "regular", size: 10 });
     lines.push({ text: "", font: "regular", size: 10 });
 
-    lines.push({ text: "MILESTONES", font: "bold", size: 13 });
+    // 3. Timeline
+    lines.push({ text: "3. TIMELINE & MILESTONES", font: "bold", size: 13 });
+    lines.push({ text: `3.1 Start Date: ${snapshot.timelineStart.toLocaleDateString()}`, font: "regular", size: 10 });
+    lines.push({ text: `3.2 Estimated End Date: ${snapshot.timelineEnd.toLocaleDateString()}`, font: "regular", size: 10 });
+    lines.push({ text: "3.3 Project Milestones:", font: "regular", size: 10 });
     if (snapshot.milestones.length === 0) {
-        lines.push({ text: "No milestones have been added yet.", font: "regular", size: 10 });
+        lines.push({ text: "    No specific milestones defined. Standard project delivery applies.", font: "regular", size: 10 });
     } else {
         snapshot.milestones.forEach((milestone, index) => {
             lines.push({
-                text: `${index + 1}. ${milestone.title} - ${formatCurrency(milestone.amount)}${milestone.deadline ? ` - Due ${new Date(milestone.deadline).toLocaleDateString()}` : ""}`,
+                text: `    ${index + 1}. ${milestone.title} - ${formatCurrency(milestone.amount)}${milestone.deadline ? ` (Due ${new Date(milestone.deadline).toLocaleDateString()})` : ""}`,
                 font: "regular",
                 size: 10,
-            });
-            wrapText(milestone.description || "").forEach((line) => {
-                lines.push({ text: `   ${line}`, font: "regular", size: 10 });
             });
         });
     }
     lines.push({ text: "", font: "regular", size: 10 });
 
-    lines.push({ text: "PAYMENT TERMS", font: "bold", size: 13 });
-    wrapText(snapshot.paymentTerms, 88).forEach((line) => {
-        lines.push({ text: line, font: "regular", size: 10 });
-    });
+    // 4. Budget & Payment
+    lines.push({ text: "4. BUDGET & PAYMENT TERMS", font: "bold", size: 13 });
+    lines.push({ text: `4.1 Total Contract Value: ${formatCurrency(snapshot.totalCost)}`, font: "bold", size: 10 });
+    lines.push({ text: `4.2 Payment Schedule:`, font: "regular", size: 10 });
     snapshot.paymentSchedule.forEach((step) => {
-        lines.push({ text: `${step.label}: ${formatCurrency(step.amount)} - ${step.note}`, font: "regular", size: 10 });
+        lines.push({ text: `    - ${step.label}: ${formatCurrency(step.amount)} (${step.note})`, font: "regular", size: 10 });
+    });
+    lines.push({ text: "4.3 General Terms:", font: "regular", size: 10 });
+    wrapText(snapshot.paymentTerms, 85).forEach((line) => {
+        lines.push({ text: `    ${line}`, font: "regular", size: 10 });
     });
     lines.push({ text: "", font: "regular", size: 10 });
 
-    lines.push({ text: "APPROVAL STATUS", font: "bold", size: 13 });
-    lines.push({ text: `Client approved: ${job.contract?.clientApproved ? "Yes" : "No"}`, font: "regular", size: 10 });
-    lines.push({ text: `Freelancer approved: ${job.contract?.freelancerApproved ? "Yes" : "No"}`, font: "regular", size: 10 });
-    lines.push({ text: `Initial payment completed: ${job.contract?.initialPaymentDone ? "Yes" : "No"}`, font: "regular", size: 10 });
+    // 5. Responsibilities
+    lines.push({ text: "5. RESPONSIBILITIES", font: "bold", size: 13 });
+    lines.push({ text: "5.1 Client Responsibilities:", font: "bold", size: 10 });
+    wrapText(snapshot.responsibilities.client, 85).forEach((line) => {
+        lines.push({ text: `    ${line}`, font: "regular", size: 10 });
+    });
+    lines.push({ text: "5.2 Freelancer Responsibilities:", font: "bold", size: 10 });
+    wrapText(snapshot.responsibilities.freelancer, 85).forEach((line) => {
+        lines.push({ text: `    ${line}`, font: "regular", size: 10 });
+    });
+    lines.push({ text: "", font: "regular", size: 10 });
+
+    // 6. Confidentiality
+    lines.push({ text: "6. CONFIDENTIALITY", font: "bold", size: 13 });
+    wrapText(snapshot.confidentialityClause, 85).forEach((line) => {
+        lines.push({ text: line, font: "regular", size: 10 });
+    });
+    lines.push({ text: "", font: "regular", size: 10 });
+
+    // 7. TERMINATION
+    lines.push({ text: "7. TERMINATION", font: "bold", size: 13 });
+    wrapText(snapshot.terminationClause, 85).forEach((line) => {
+        lines.push({ text: line, font: "regular", size: 10 });
+    });
+    lines.push({ text: "", font: "regular", size: 10 });
+
+    // 8. Signatures
+    lines.push({ text: "8. AGREEMENT & SIGNATURES", font: "bold", size: 13 });
+    lines.push({ text: "By signing below, both parties agree to the terms and conditions outlined in this agreement.", font: "regular", size: 10 });
+    lines.push({ text: "", font: "regular", size: 10 });
+    lines.push({ text: "__________________________          __________________________", font: "regular", size: 10 });
+    lines.push({ text: "Client Signature                      Freelancer Signature", font: "regular", size: 10 });
+    lines.push({ text: `Approved: ${job.contract?.clientApproved ? "YES (" + job.contract.clientApprovedAt?.toLocaleDateString() + ")" : "PENDING"}          Approved: ${job.contract?.freelancerApproved ? "YES (" + job.contract.freelancerApprovedAt?.toLocaleDateString() + ")" : "PENDING"}`, font: "regular", size: 8 });
 
     return lines;
 };

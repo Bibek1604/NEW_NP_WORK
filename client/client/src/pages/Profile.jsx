@@ -6,10 +6,12 @@ import {
     ChangeAvatarModal,
     ClientPostedJobs,
     EditAboutModal,
+    EditCvModal,
     EditHourlyRateModal,
     EditTagsModal,
     Loader,
     ReviewsDisplay,
+    ViewCvModal,
 } from "../components";
 import toast from "react-hot-toast";
 import api from "../utils/api";
@@ -19,6 +21,8 @@ import {
     FiMapPin,
     FiCheckCircle,
     FiStar,
+    FiFileText,
+    FiDownloadCloud
 } from "react-icons/fi";
 import capitalize from "../utils/capitalize";
 
@@ -31,6 +35,8 @@ function Profile() {
     const [editHourlyRateModal, setEditHourlyRateModal] = useState(false);
     const [editAboutModal, setEditAboutModal] = useState(false);
     const [editTagsModal, setEditTagsModal] = useState(false);
+    const [editCvModal, setEditCvModal] = useState(false);
+    const [viewCvModal, setViewCvModal] = useState(false);
 
     // Redirect if userId is undefined
     useEffect(() => {
@@ -109,6 +115,21 @@ function Profile() {
                     setModalFn={setEditAboutModal}
                     profileData={currentProfileData}
                     refetchProfileFn={fetchSetCurrentProfileData}
+                />
+            )}
+
+            {editCvModal && (
+                <EditCvModal
+                    setModalFn={setEditCvModal}
+                    profileData={currentProfileData}
+                    refetchProfileFn={fetchSetCurrentProfileData}
+                />
+            )}
+
+            {viewCvModal && (
+                <ViewCvModal
+                    setModalFn={setViewCvModal}
+                    cvUrl={currentProfileData.cv}
                 />
             )}
 
@@ -239,6 +260,78 @@ function Profile() {
                                 {currentProfileData.about || "No bio added yet"}
                             </p>
                         </div>
+
+                        {/* CV Section - Freelancer Only */}
+                        {isFreelancer && (
+                            <div className="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-black tracking-wide uppercase text-slate-900">Curriculum Vitae</h3>
+                                    {isOwnProfile && (
+                                        <button 
+                                            onClick={() => setEditCvModal(true)}
+                                            className="text-xs font-bold text-primary hover:underline"
+                                        >
+                                            {currentProfileData.cv ? "Update" : "Upload"}
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                {currentProfileData.cv ? (
+                                    <div className="relative group overflow-hidden border border-slate-200 rounded-2xl bg-slate-50 transition-all hover:shadow-xl hover:shadow-primary/5">
+                                        {/* Preview Image & Link */}
+                                        <div 
+                                            onClick={() => setViewCvModal(true)}
+                                            className="block aspect-[3/4] w-full overflow-hidden relative cursor-pointer"
+                                        >
+                                            <img 
+                                                src={currentProfileData.cv.includes("cloudinary.com") 
+                                                    ? currentProfileData.cv.replace(".pdf", ".jpg").replace("/upload/", "/upload/w_500,h_700,c_fill,pg_1,q_auto,f_auto/") 
+                                                    : "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2070&auto=format&fit=crop"
+                                                } 
+                                                alt="CV Preview"
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2070&auto=format&fit=crop";
+                                                }}
+                                            />
+                                            {/* Overlay */}
+                                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                                                <div className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                                                    <FiFileText size={16} />
+                                                    View Full CV
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Info Strip */}
+                                        <div className="p-4 flex items-center justify-between bg-white border-t border-slate-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                                    <FiFileText size={16} />
+                                                </div>
+                                                <p className="text-xs font-black text-slate-700 truncate max-w-[120px]">Resume_Profile.pdf</p>
+                                            </div>
+                                            <a 
+                                                href={currentProfileData.cv} 
+                                                download
+                                                className="p-2 text-slate-400 hover:text-primary transition-colors"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <FiDownloadCloud size={18} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="py-10 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
+                                        <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-3 text-slate-200">
+                                            <FiFileText size={24} />
+                                        </div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No CV uploaded yet</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Main Content */}

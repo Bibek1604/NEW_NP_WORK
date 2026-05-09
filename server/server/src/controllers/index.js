@@ -26,6 +26,7 @@ import { reviewJobByClient } from "./job/reviewJob.controller.js";
 import { getHomePageJobs } from "./job/getHomePageJobs.controller.js";
 import { getFreelancerJobs } from "./job/getFreelancerJobs.controller.js";
 import { inviteFreelancer } from "./job/inviteFreelancer.controller.js";
+import { respondInvitation } from "./job/respondInvitation.controller.js";
 import { getFreelancers } from "./user/getFreelancers.controller.js";
 import {
     getProfileData,
@@ -35,6 +36,8 @@ import {
 } from "./user/profile.controller.js";
 import { generateAboutDescription } from "./user/generateAboutDescription.controller.js";
 import { updateAvatar } from "./user/updateAvatar.controller.js";
+import { updateCv } from "./user/updateCv.controller.js";
+import { getDashboardAnalytics } from "./user/getDashboardAnalytics.controller.js";
 import { deleteJob } from "./job/deleteJob.controller.js";
 import { applyJob } from "./job/applyJob.controller.js";
 import { getApplicants } from "./job/getApplicants.controller.js";
@@ -111,8 +114,11 @@ export {
     getHomePageJobs,
     getFreelancers,
     inviteFreelancer,
+    respondInvitation,
     getProfileData,
+    getDashboardAnalytics,
     updateAvatar,
+    updateCv,
     updateProfileTags,
     updateAbout,
     updateHourlyRate,

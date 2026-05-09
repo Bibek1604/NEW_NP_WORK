@@ -126,6 +126,10 @@ const userSchema = new mongoose.Schema(
         },
 
         refreshToken: String,
+        cv: {
+            type: String,
+            default: null,
+        },
     },
     { timestamps: true },
 );

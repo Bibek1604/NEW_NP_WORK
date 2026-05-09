@@ -29,6 +29,21 @@ export const inviteFreelancer = asyncHandler(async (req, res) => {
         throw new ApiError(404, true, "Freelancer not found");
     }
 
+    // Check if already invited
+    const alreadyInvited = job.invitations.find((inv) => inv.freelancer?.toString() === freelancerId);
+    if (alreadyInvited && alreadyInvited.status === "pending") {
+        throw new ApiError(400, true, "Freelancer has already been invited to this project");
+    }
+
+    // Add invitation to job
+    job.invitations.push({
+        freelancer: freelancer._id,
+        status: "pending",
+        message: req.body.message || `You have been invited to review the project \"${job.title}\".`,
+    });
+
+    await job.save();
+
     await sendNotification({
         receiverId: freelancer._id,
         senderId: userId,

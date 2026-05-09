@@ -24,6 +24,8 @@ import Review from "./Profile/ReviewCard";
 import EditHourlyRateModal from "./Profile/EditHourlyRateModal";
 import EditTagsModal from "./Profile/EditTagsModal";
 import EditAboutModal from "./Profile/EditAboutModal";
+import EditCvModal from "./Profile/EditCvModal";
+import ViewCvModal from "./Profile/ViewCvModal";
 import Tag from "./Tag";
 import ConfirmModal from "./ConfirmModal";
 import ApplyJobModal from "./ApplyJobModal";
@@ -74,6 +76,7 @@ export {
     EditHourlyRateModal,
     EditTagsModal,
     EditAboutModal,
+    EditCvModal,
     Tag,
     ConfirmModal,
     ApplyJobModal,
@@ -90,4 +93,5 @@ export {
     ReviewsDisplay,
     ReviewsSummary,
     ReviewButton,
+    ViewCvModal,
 };

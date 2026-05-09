@@ -131,7 +131,51 @@ const jobSchema = new mongoose.Schema(
                     order: Number,
                 },
             ],
+            responsibilities: {
+                client: {
+                    type: String,
+                    default: "Provide necessary requirements, feedback, and timely payments as per the agreed milestones.",
+                },
+                freelancer: {
+                    type: String,
+                    default: "Execute the project scope with professional diligence, meeting the specified quality standards and deadlines.",
+                },
+            },
+            confidentialityClause: {
+                type: String,
+                default: "Both parties agree to keep all project-related sensitive information confidential and not disclose it to third parties without prior consent.",
+            },
+            terminationClause: {
+                type: String,
+                default: "Either party may terminate the contract with a 7-day notice if the other party fails to meet their responsibilities. Any work completed up to that point must be compensated.",
+            },
         },
+
+        invitations: [
+            {
+                freelancer: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                },
+                status: {
+                    type: String,
+                    enum: ["pending", "accepted", "declined"],
+                    default: "pending",
+                },
+                terms: {
+                    type: String,
+                    default: "",
+                },
+                message: {
+                    type: String,
+                    default: "",
+                },
+                invitedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
 
         applications: [
             {

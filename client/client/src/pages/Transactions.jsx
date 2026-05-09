@@ -45,6 +45,19 @@ function Transactions() {
         setFilters(updated);
     };
 
+    const setQuickDate = (days) => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - days);
+        
+        const updated = saveTransactionFilters({ 
+            ...filters, 
+            startDate: start.toISOString().split('T')[0],
+            endDate: end.toISOString().split('T')[0]
+        });
+        setFilters(updated);
+    };
+
     const resetFilters = () => {
         const reset = clearTransactionFilters();
         setFilters(reset);
@@ -174,30 +187,92 @@ function Transactions() {
                     </div>
 
                     {/* Filter Section */}
-                    <div className="px-8 py-4 bg-white border-b border-gray-100">
-                        <div className="flex items-center gap-3 mb-4">
-                            <FiFilter className="text-gray-400" size={18} />
-                            <span className="text-sm font-medium text-gray-600">Filter</span>
+                    <div className="px-8 py-6 bg-white border-b border-gray-100 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                                    <FiFilter size={18} />
+                                </div>
+                                <div>
+                                    <span className="text-sm font-black text-slate-900 uppercase tracking-tight">Advanced Filtering</span>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Refine your financial history</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                {[
+                                    { label: 'Last 7 Days', days: 7 },
+                                    { label: '30 Days', days: 30 },
+                                    { label: '90 Days', days: 90 }
+                                ].map(btn => (
+                                    <button
+                                        key={btn.label}
+                                        onClick={() => setQuickDate(btn.days)}
+                                        className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-100 rounded-lg hover:bg-white hover:border-primary/30 hover:text-primary transition-all"
+                                    >
+                                        {btn.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 max-w-md">
-                            <select
-                                value={filters.purpose}
-                                onChange={(e) => updateFilter("purpose", e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
-                            >
-                                <option value="all">All Payment Types</option>
-                                <option value="initial">Initial Deposit</option>
-                                <option value="final">Final Payment</option>
-                                <option value="milestone">Milestone Payment</option>
-                            </select>
 
-                            <button
-                                type="button"
-                                onClick={resetFilters}
-                                className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold whitespace-nowrap"
-                            >
-                                Reset
-                            </button>
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                            <div className="md:col-span-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                                <select
+                                    value={filters.status}
+                                    onChange={(e) => updateFilter("status", e.target.value)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                                >
+                                    <option value="all">All Statuses</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+
+                            <div className="md:col-span-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Payment Type</label>
+                                <select
+                                    value={filters.purpose}
+                                    onChange={(e) => updateFilter("purpose", e.target.value)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                                >
+                                    <option value="all">All Types</option>
+                                    <option value="initial">Initial Deposit</option>
+                                    <option value="final">Final Payment</option>
+                                    <option value="milestone">Milestone</option>
+                                </select>
+                            </div>
+
+                            <div className="md:col-span-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">From Date</label>
+                                <input
+                                    type="date"
+                                    value={filters.startDate}
+                                    onChange={(e) => updateFilter("startDate", e.target.value)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                                />
+                            </div>
+
+                            <div className="md:col-span-1">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">To Date</label>
+                                <input
+                                    type="date"
+                                    value={filters.endDate}
+                                    onChange={(e) => updateFilter("endDate", e.target.value)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                                />
+                            </div>
+
+                            <div className="md:col-span-1">
+                                <button
+                                    type="button"
+                                    onClick={resetFilters}
+                                    className="w-full px-6 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold transition-all hover:bg-slate-800 shadow-lg shadow-slate-200 active:scale-95"
+                                >
+                                    Reset
+                                </button>
+                            </div>
                         </div>
                     </div>
 

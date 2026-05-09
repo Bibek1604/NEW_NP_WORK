@@ -4,8 +4,10 @@ import toast from "react-hot-toast";
 import Loader from "./Loader";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { useAuth } from "../stores";
 
 function JobOverview({ jobId, jobData, isSelectedFreelancer }) {
+    const { userData } = useAuth();
     const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -314,63 +316,167 @@ function JobOverview({ jobId, jobData, isSelectedFreelancer }) {
 
                     {/* Work Timeline */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             Project Timeline
                         </h3>
                         <div className="space-y-4">
-                            <div>
-                                <p className="text-sm text-gray-500 mb-1">
-                                    Start Date
-                                </p>
-                                <p className="font-medium">
-                                    {data?.workStartedAt
-                                        ? new Date(
-                                            data.workStartedAt,
-                                        ).toLocaleString(undefined, {
-                                            year: "numeric",
-                                            month: "short",
-                                            day: "numeric",
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                            second: "2-digit",
-                                            timeZoneName: "short",
-                                        })
-                                        : "Not started yet"}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 mb-1">
-                                    End Date
-                                </p>
-                                <p className="font-medium">
-                                    {data?.workEndedAt
-                                        ? new Date(
-                                            data.workEndedAt,
-                                        ).toLocaleString(undefined, {
-                                            year: "numeric",
-                                            month: "short",
-                                            day: "numeric",
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                            second: "2-digit",
-                                            timeZoneName: "short",
-                                        })
-                                        : "-"}
-                                </p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-bold">Timeline Start</p>
+                                    <p className="font-medium text-sm">
+                                        {contract?.timelineStart ? new Date(contract.timelineStart).toLocaleDateString() : "TBD"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-bold">Timeline End</p>
+                                    <p className="font-medium text-sm">
+                                        {contract?.timelineEnd ? new Date(contract.timelineEnd).toLocaleDateString() : "TBD"}
+                                    </p>
+                                </div>
                             </div>
                             <div className="pt-2 border-t">
-                                <p className="text-sm text-gray-500 mb-2">
-                                    Current Status
-                                </p>
-                                <span
-                                    className={`px-3 py-1 rounded-full text-sm ${statusStyles[data?.jobStatus]}`}
-                                >
+                                <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-bold">Current Status</p>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${statusStyles[data?.jobStatus]}`}>
                                     {isProjectComplete ? "completed" : data?.jobStatus?.replace("_", " ")}
                                 </span>
+                            </div>
+                            <div className="pt-2 border-t text-xs text-gray-500">
+                                <p className="font-bold uppercase tracking-wider mb-1">Execution Log</p>
+                                <p>Started: {data?.workStartedAt ? new Date(data.workStartedAt).toLocaleString() : "Pending"}</p>
+                                <p>Finished: {data?.workEndedAt ? new Date(data.workEndedAt).toLocaleString() : "-"}</p>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Contract Clauses Section */}
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+                        <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Responsibilities
+                        </h4>
+                        <div className="space-y-3 text-sm text-gray-600">
+                            <div>
+                                <p className="font-bold text-gray-800 text-xs uppercase tracking-tight">Client</p>
+                                <p className="mt-1 leading-relaxed">{contract?.responsibilities?.client}</p>
+                            </div>
+                            <div className="pt-2 border-t border-gray-100">
+                                <p className="font-bold text-gray-800 text-xs uppercase tracking-tight">Freelancer</p>
+                                <p className="mt-1 leading-relaxed">{contract?.responsibilities?.freelancer}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+                        <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            Confidentiality
+                        </h4>
+                        <p className="text-sm text-gray-600 leading-relaxed italic">
+                            "{contract?.confidentialityClause}"
+                        </p>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+                        <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Termination
+                        </h4>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            {contract?.terminationClause}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Invitations Section */}
+                {data?.invitations?.length > 0 && (
+                    <div className="mt-8 border-t pt-8">
+                        <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                            Project Invitations
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {data.invitations.map((invite) => {
+                                const isCurrentFreelancer = invite.freelancer?._id === userData?._id || invite.freelancer?._id === userData?.id;
+                                const isPending = invite.status === "pending";
+
+                                return (
+                                    <div key={invite._id} className={`rounded-xl border p-4 ${isPending ? "bg-white border-primary/20 shadow-sm" : "bg-gray-50 border-gray-200"}`}>
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <img src={invite.freelancer?.avatar?.url} alt="" className="w-10 h-10 rounded-full border border-gray-200 object-cover" />
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{invite.freelancer?.name?.firstName} {invite.freelancer?.name?.lastName}</p>
+                                                    <p className="text-xs text-gray-500 italic">Invited on {new Date(invite.invitedAt).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                                invite.status === "accepted" ? "bg-green-100 text-green-700" :
+                                                invite.status === "declined" ? "bg-red-100 text-red-700" :
+                                                "bg-amber-100 text-amber-700"
+                                            }`}>
+                                                {invite.status}
+                                            </span>
+                                        </div>
+                                        
+                                        {invite.message && (
+                                            <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-3 border-l-2 border-primary/30">
+                                                "{invite.message}"
+                                            </p>
+                                        )}
+
+                                        {invite.terms && (
+                                            <div className="mb-3">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Proposed Terms</p>
+                                                <p className="text-xs text-emerald-700 font-medium">{invite.terms}</p>
+                                            </div>
+                                        )}
+
+                                        {isPending && isSelectedFreelancer && (
+                                            <div className="flex flex-col gap-2 mt-4">
+                                                <textarea 
+                                                    id={`terms-${invite._id}`}
+                                                    placeholder="Set your own terms (optional)..."
+                                                    className="text-xs p-2 border border-gray-200 rounded focus:ring-1 focus:ring-primary outline-none"
+                                                    rows="2"
+                                                ></textarea>
+                                                <div className="flex gap-2">
+                                                    <Button 
+                                                        className="flex-1 text-xs py-2 h-auto"
+                                                        onClick={async () => {
+                                                            const terms = document.getElementById(`terms-${invite._id}`).value;
+                                                            try {
+                                                                await api.post(`/jobs/${jobId}/respond-invitation`, { status: "accepted", terms });
+                                                                toast.success("Invitation accepted!");
+                                                                fetchSetOverviewData();
+                                                            } catch (err) {
+                                                                toast.error(err.response?.data?.message || "Action failed");
+                                                            }
+                                                        }}
+                                                    >Accept Invite</Button>
+                                                    <Button 
+                                                        className="flex-1 text-xs py-2 h-auto bg-white text-red-600 border-red-200 hover:bg-red-50"
+                                                        onClick={async () => {
+                                                            try {
+                                                                await api.post(`/jobs/${jobId}/respond-invitation`, { status: "declined" });
+                                                                toast.success("Invitation declined");
+                                                                fetchSetOverviewData();
+                                                            } catch (err) {
+                                                                toast.error(err.response?.data?.message || "Action failed");
+                                                            }
+                                                        }}
+                                                    >Decline</Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Additional Info Section */}
                 {isProjectComplete && (

@@ -25,22 +25,34 @@ export const getJobOverview = asyncHandler(async (req, res) => {
 
     const job = await Job.findOne({
         _id: jobId,
-        $or: [{ postedBy: userId }, { acceptedFreelancer: userId }],
+        $or: [
+            { postedBy: userId },
+            { acceptedFreelancer: userId },
+            { "invitations.freelancer": userId }
+        ],
     });
 
     if (!job) {
-        throw new ApiError(404, false, "Job not found");
+        throw new ApiError(404, false, "Job not found or access denied");
     }
+
+    const isInvited = job.invitations.some(
+        (inv) => inv.freelancer.toString() === userId && inv.status === "pending"
+    );
 
     if (
         userId !== job.postedBy.toString() &&
-        userId !== job.acceptedFreelancer.toString()
+        userId !== job.acceptedFreelancer?.toString() &&
+        !isInvited
     ) {
-        throw new ApiError(401, false, "You do not have access");
+        throw new ApiError(401, false, "You do not have access to this project");
     }
 
     const milestones = await Milestone.find({ projectId: job._id }).sort({ order: 1, createdAt: 1 });
     const snapshot = buildContractSnapshot({ job, milestones });
+
+    const jobWithPopulatedInvites = await Job.findById(job._id)
+        .populate({ path: "invitations.freelancer", select: "name email avatar" });
 
     const overview = {
         workStartedAt: job.startTime,
@@ -54,6 +66,7 @@ export const getJobOverview = asyncHandler(async (req, res) => {
               : 0,
         payment: job.payment,
         jobStatus: job.status,
+        invitations: jobWithPopulatedInvites.invitations,
         contract: {
             ...(job.contract?.toObject?.() ?? job.contract ?? {}),
             status: job.contract?.status || "draft",
@@ -67,6 +80,9 @@ export const getJobOverview = asyncHandler(async (req, res) => {
             timelineStart: snapshot.timelineStart,
             timelineEnd: snapshot.timelineEnd,
             milestones: snapshot.milestones,
+            responsibilities: snapshot.responsibilities,
+            confidentialityClause: snapshot.confidentialityClause,
+            terminationClause: snapshot.terminationClause,
             downloadUrl: `/jobs/${job._id}/contract/pdf`,
         },
         milestoneSummary: {
