@@ -12,27 +12,11 @@ import {
     Filler,
     ArcElement,
     BarElement,
-    RadialLinearScale,
 } from "chart.js";
-import { Radar } from "react-chartjs-2";
-import { 
-    FiDollarSign,
-    FiBriefcase,
-    FiCheck,
-    FiTrendingUp,
-    FiArrowUpRight,
-    FiClock,
-    FiAlertCircle,
-    FiActivity
-} from "react-icons/fi";
+import { FiBriefcase, FiCheck, FiArrowUpRight, FiClock, FiAlertCircle, FiActivity } from "react-icons/fi";
 import api from "../utils/api";
 import Loader from "./Loader";
 import { useAuth } from "../stores";
-import {
-    applyTransactionFilters,
-    loadTransactionFilters,
-    toTransactionApiParams,
-} from "../utils/transactionFilters";
 
 ChartJS.register(
     CategoryScale,
@@ -45,8 +29,7 @@ ChartJS.register(
     Filler,
     ArcElement,
     ArcElement,
-    BarElement,
-    RadialLinearScale
+    BarElement
 );
 
 const DashboardAnalytics = ({ role }) => {
@@ -65,7 +48,8 @@ const DashboardAnalytics = ({ role }) => {
     const [transactions, setTransactions] = useState([]);
 
     const [analytics, setAnalytics] = useState(null);
-    const [performanceData, setPerformanceData] = useState({ labels: [], datasets: [] });
+    const [earningsSummary, setEarningsSummary] = useState({ totalMonth: 0, growth: 0, nextMilestone: 0 });
+    const [projectCompletionData, setProjectCompletionData] = useState({ labels: [], datasets: [] });
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -95,21 +79,52 @@ const DashboardAnalytics = ({ role }) => {
                     }]
                 });
 
-                // Performance Radar/Polar Chart or Bar
-                setPerformanceData({
-                    labels: ['Completion Rate', 'On-Time Rate', 'Delivery Speed'],
+                // Financial Chart Data (using financials breakdown)
+                const sortedFinancials = [...data.financials.breakdown].sort((a, b) => b.amount - a.amount).slice(0, 6);
+                setMainChartData({
+                    labels: sortedFinancials.map(f => f.title.substring(0, 15) + (f.title.length > 15 ? '...' : '')),
                     datasets: [{
-                        label: 'Percentage (%)',
-                        data: [data.performance.completionRate, data.performance.onTimePercentage, 100 - data.performance.delayRate],
-                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        borderColor: '#6366f1',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#6366f1',
+                        label: role === 'freelancer' ? 'Earnings Trend' : 'Spending Trend',
+                        data: sortedFinancials.map(f => f.amount),
+                        borderColor: role === 'freelancer' ? '#10b981' : '#3b82f6',
+                        backgroundColor: role === 'freelancer' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: role === 'freelancer' ? '#10b981' : '#3b82f6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
                     }]
                 });
 
-                // Financial Chart Data (using financials breakdown)
-                const sortedFinancials = [...data.financials.breakdown].sort((a, b) => b.amount - a.amount).slice(0, 6);
+                // Earnings Summary (freelancer only) 
+                if (role === 'freelancer') {
+                    setEarningsSummary({
+                        totalMonth: data.financials.total,
+                        growth: data.financials.monthlyGrowth || 0,
+                        nextMilestone: data.financials.nextMilestoneAmount || 0
+                    });
+
+                    // Project Completion Chart (freelancer only)
+                    if (data.topProjects?.length > 0) {
+                        setProjectCompletionData({
+                            labels: data.topProjects.map(p => p.title.substring(0, 20)),
+                            datasets: [{
+                                label: 'Completion %',
+                                data: data.topProjects.map(p => p.progress || 0),
+                                backgroundColor: data.topProjects.map((p) => {
+                                    if (p.progress >= 100) return '#10b981'; // Green for completed
+                                    if (p.progress >= 75) return '#3b82f6'; // Blue for near completion
+                                    if (p.progress >= 50) return '#f59e0b'; // Amber for halfway
+                                    return '#ec4899'; // Pink for just started
+                                }),
+                                borderRadius: 8,
+                                borderSkipped: false,
+                            }]
+                        });
+                    }
+                }
+
                 setBarChartData({
                     labels: sortedFinancials.map(f => f.title.substring(0, 15) + (f.title.length > 15 ? '...' : '')),
                     datasets: [{
@@ -138,25 +153,6 @@ const DashboardAnalytics = ({ role }) => {
         fetchAllData();
     }, [userData, role]);
 
-    // Helper functions for transactions
-    const getUserName = (user) => {
-        if (!user) return "Unknown";
-        const firstName = user.firstName || user.name?.firstName || "";
-        const lastName = user.lastName || user.name?.lastName || "";
-        return `${firstName} ${lastName}`.trim() || "Unknown";
-    };
-
-    const getTransactionPartner = (txn) => {
-        const isInitiator = (txn.initiator?._id || txn.initiator) === userData?._id;
-        const partner = isInitiator ? txn.receiver : txn.initiator;
-        return getUserName(partner);
-    };
-
-    const getTransactionType = (txn) => {
-        const isInitiator = (txn.initiator?._id || txn.initiator) === userData?._id;
-        return isInitiator ? "Paid to" : "Received from";
-    };
-
     return (
         <div className="space-y-8 font-['Poppins',_sans-serif]">
             {fetching && <Loader />}
@@ -183,7 +179,7 @@ const DashboardAnalytics = ({ role }) => {
             </div>
 
             {/* Metrics Section with Enhanced Grid */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={`grid grid-cols-1 gap-4 ${role === 'freelancer' ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
                 <MetricTile 
                     label="On-Time Rate" 
                     value={`${analytics?.performance?.onTimePercentage || 0}%`} 
@@ -191,14 +187,37 @@ const DashboardAnalytics = ({ role }) => {
                     icon={<FiClock />}
                     trend={analytics?.performance?.onTimePercentage > 80 ? "up" : "neutral"}
                 />
+                
+                {/* Freelancer Only - Earnings Summary in Metrics Row */}
+                {role === 'freelancer' && (
+                    <>
+                        <div onClick={() => window.location.href = '/earnings'} className="p-4 transition-all duration-300 border rounded-lg cursor-pointer group bg-gradient-to-br from-emerald-50 to-white border-emerald-200 hover:shadow-lg hover:scale-105 active:scale-95">
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600">This Month</p>
+                                <FiArrowUpRight className="transition-transform text-emerald-600 group-hover:translate-x-1" size={14} />
+                            </div>
+                            <h3 className="text-lg font-black text-emerald-700">Rs. {(earningsSummary.totalMonth || 0).toLocaleString()}</h3>
+                            <p className="text-[11px] text-emerald-600 mt-1 font-semibold">Total earnings</p>
+                        </div>
+
+                        <div onClick={() => window.location.href = '/projects'} className="p-4 transition-all duration-300 border border-purple-200 rounded-lg cursor-pointer group bg-gradient-to-br from-purple-50 to-white hover:shadow-lg hover:scale-105 active:scale-95">
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-purple-600">Running</p>
+                                <FiBriefcase className="text-purple-600 transition-transform group-hover:scale-110" size={14} />
+                            </div>
+                            <h3 className="text-lg font-black text-purple-700">{stats.activeProjects || 0}</h3>
+                            <p className="text-[11px] text-purple-600 mt-1 font-semibold">Projects in progress</p>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Specialized Sections - Deadlines & Performance */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                  {/* Deadline Monitoring */}
-                 <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+                 <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
+                        <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
                             <FiAlertCircle className="text-rose-500" /> Deadline Monitor
                         </h3>
                         <span className="text-[10px] font-bold bg-rose-50 text-rose-600 px-2 py-1 rounded">Real-time</span>
@@ -209,7 +228,7 @@ const DashboardAnalytics = ({ role }) => {
                             <div className="space-y-2">
                                 <p className="text-[10px] font-bold text-rose-500 uppercase tracking-tighter">⚠️ Overdue</p>
                                 {analytics.deadlines.overdue.map((d, i) => (
-                                    <div key={i} className="flex items-center justify-between p-2 bg-rose-50 border border-rose-100 rounded-lg text-xs">
+                                    <div key={i} className="flex items-center justify-between p-2 text-xs border rounded-lg bg-rose-50 border-rose-100">
                                         <div>
                                             <p className="font-bold text-rose-900">{d.title}</p>
                                             <p className="text-rose-700 opacity-70">{d.projectName}</p>
@@ -224,7 +243,7 @@ const DashboardAnalytics = ({ role }) => {
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">📅 Upcoming (Next 7 Days)</p>
                             {analytics?.deadlines?.upcoming?.length > 0 ? (
                                 analytics.deadlines.upcoming.map((d, i) => (
-                                    <div key={i} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded-lg text-xs">
+                                    <div key={i} className="flex items-center justify-between p-2 text-xs border rounded-lg bg-slate-50 border-slate-100">
                                         <div>
                                             <p className="font-bold text-slate-900">{d.title}</p>
                                             <p className="text-slate-500">{d.projectName}</p>
@@ -233,26 +252,58 @@ const DashboardAnalytics = ({ role }) => {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-xs text-slate-400 italic">No tight deadlines approaching</p>
+                                <p className="text-xs italic text-slate-400">No tight deadlines approaching</p>
                             )}
                         </div>
                     </div>
                  </div>
 
-                 {/* Performance Radar */}
-                 <div className="p-6 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 flex items-center gap-2">
-                        <FiActivity className="text-primary" /> Performance Matrix
-                    </h3>
-                    <div className="h-48 flex items-center justify-center">
-                        <Radar 
-                            data={performanceData}
-                            options={{
-                                scales: { r: { min: 0, max: 100, ticks: { display: false } } },
-                                plugins: { legend: { display: false } },
-                                maintainAspectRatio: false
-                            }}
-                        />
+                 {/* Projects Monitoring */}
+                 <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
+                    <div className="flex items-center justify-between">
+                        <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
+                            <FiBriefcase className="text-blue-500" /> Project Status
+                        </h3>
+                        <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">Live</span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                            <button onClick={() => window.location.href = '/projects'} className="w-full p-3 text-sm font-black tracking-widest text-white uppercase transition-all duration-300 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg hover:scale-105 active:scale-95">
+                                → Ongoing Projects
+                            </button>
+
+                        <div onClick={() => window.location.href = '/projects'} className="flex items-center justify-between p-3 transition-all duration-300 border border-blue-100 rounded-lg cursor-pointer bg-blue-50 group hover:shadow-md hover:bg-blue-100 active:scale-95">
+                            <div className="flex items-center gap-3">
+                                <FiBriefcase className="text-blue-500 transition-transform group-hover:scale-110" size={20} />
+                                <div>
+                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">Running Projects</p>
+                                    <p className="text-xs text-blue-900 font-bold mt-0.5">{stats.activeProjects || 0} in progress</p>
+                                </div>
+                            </div>
+                            <p className="text-2xl font-black text-blue-600">{stats.activeProjects || 0}</p>
+                        </div>
+
+                        <div onClick={() => window.location.href = '/completed-projects'} className="flex items-center justify-between p-3 transition-all duration-300 border rounded-lg cursor-pointer bg-emerald-50 border-emerald-100 group hover:shadow-md hover:bg-emerald-100 active:scale-95">
+                            <div className="flex items-center gap-3">
+                                <FiCheck className="transition-transform text-emerald-500 group-hover:scale-110" size={20} />
+                                <div>
+                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
+                                    <p className="text-xs text-emerald-900 font-bold mt-0.5">{stats.completedJobs || 0} projects finished</p>
+                                </div>
+                            </div>
+                            <p className="text-2xl font-black text-emerald-600">{stats.completedJobs || 0}</p>
+                        </div>
+
+                        <div onClick={() => window.location.href = '/projects'} className="flex items-center justify-between p-3 transition-all duration-300 border rounded-lg cursor-pointer bg-slate-50 border-slate-100 group hover:shadow-md hover:bg-slate-100 active:scale-95">
+                            <div className="flex items-center gap-3">
+                                <FiActivity className="transition-transform text-slate-500 group-hover:scale-110" size={20} />
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">Total Projects</p>
+                                    <p className="text-xs text-slate-900 font-bold mt-0.5">{stats.totalProjects || 0} all time</p>
+                                </div>
+                            </div>
+                            <p className="text-2xl font-black text-slate-600">{stats.totalProjects || 0}</p>
+                        </div>
                     </div>
                  </div>
             </div>
@@ -276,154 +327,223 @@ const DashboardAnalytics = ({ role }) => {
                         </div>
                     </div>
                     <div className="p-2 rounded-lg h-80 bg-gradient-to-b from-slate-50/50 to-white">
-                         <Line 
-                            data={mainChartData} 
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: { 
-                                    legend: { display: false },
-                                    tooltip: {
-                                        mode: 'index',
-                                        intersect: false,
-                                        backgroundColor: '#1e293b',
-                                        titleFont: { family: 'Poppins', size: 13, weight: 'bold' },
-                                        bodyFont: { family: 'Poppins', size: 12 },
-                                        padding: 14,
-                                        cornerRadius: 10,
-                                        displayColors: true,
-                                    }
-                                },
-                                scales: {
-                                    y: { 
-                                        beginAtZero: true,
-                                        border: { display: false }, 
-                                        grid: { color: '#f1f5f9', drawTicks: false }, 
-                                        ticks: { 
-                                            font: { size: 11, family: 'Poppins', weight: '500' }, 
-                                            color: '#94a3b8',
-                                            callback: (v) => v >= 1000 ? `Rs.${(v/1000).toFixed(1)}k` : `Rs.${v}`,
-                                            padding: 12
-                                        } 
-                                    },
-                                    y1: {
-                                        beginAtZero: true,
-                                        position: 'right',
-                                        display: true,
-                                        grid: { display: false },
-                                        ticks: {
-                                            font: { size: 10, family: 'Poppins', weight: '500' },
-                                            color: '#cbd5e1',
-                                            callback: (v) => `${v}x`
-                                        }
-                                    },
-                                    x: { 
-                                        grid: { display: false }, 
-                                        ticks: { font: { size: 11, family: 'Poppins', weight: '500' }, color: '#94a3b8', padding: 12 } 
-                                    }
-                                }
-                            }} 
-                         />
-                    </div>
-                </div>
-
-                {/* Project Distribution */}
-                <div className="p-6 transition-shadow duration-300 bg-white border rounded-lg shadow-sm border-slate-200 hover:shadow-md">
-                    <div className="space-y-6">
-                        <div>
-                            <h3 className="text-base font-black leading-none tracking-wider uppercase text-slate-900">Project Status</h3>
-                            <p className="mt-2 text-xs font-medium text-slate-400">Distribution across categories</p>
-                        </div>
-                        
-                        <div className="relative flex items-center justify-center h-48">
-                            {mainChartData.labels.length > 0 ? (
-                                <>
-                                    <Doughnut 
-                                        data={doughnutData}
-                                        options={{
-                                            cutout: '72%',
-                                            plugins: { legend: { display: false } },
-                                            maintainAspectRatio: false
-                                        }}
-                                    />
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-3xl font-black leading-none text-slate-900">{stats.activeProjects + stats.completedJobs}</span>
-                                        <span className="mt-2 text-xs font-bold tracking-wider uppercase text-slate-400">Projects</span>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full">
-                                    <p className="text-sm text-slate-400">No projects yet</p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="pt-4 space-y-3 border-t border-slate-100">
-                            <LegendItem label="Completed" color="bg-emerald-500" value={stats.completedJobs} />
-                            <LegendItem label="Active" color="bg-blue-500" value={stats.activeProjects} />
-                            <LegendItem label="Archived" color="bg-slate-300" value="Old" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Category Breakdown */}
-                <div className="p-6 transition-shadow duration-300 bg-white border rounded-lg shadow-sm border-slate-200 hover:shadow-md">
-                    <div className="mb-6">
-                        <h3 className="text-base font-black leading-none tracking-wider uppercase text-slate-900">Category Breakdown</h3>
-                        <p className="mt-2 text-xs font-medium text-slate-400">Top {role === 'freelancer' ? 'earning' : 'spending'} categories by value</p>
-                    </div>
-                    <div className="p-2 rounded-lg h-80 bg-gradient-to-b from-slate-50/50 to-white">
-                        {barChartData.labels.length > 0 ? (
-                            <Bar 
-                                data={barChartData}
-                                options={{
-                                    indexAxis: 'y',
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: { display: false },
-                                        tooltip: {
-                                            backgroundColor: '#1e293b',
-                                            titleFont: { family: 'Poppins', size: 13, weight: 'bold' },
-                                            bodyFont: { family: 'Poppins', size: 12 },
-                                            padding: 14,
-                                            cornerRadius: 10,
-                                            callbacks: {
-                                                label: (context) => `Rs. ${context.parsed.x.toLocaleString()}`
-                                            }
-                                        }
-                                    },
-                                    scales: {
-                                        x: {
-                                            beginAtZero: true,
-                                            border: { display: false },
-                                            grid: { color: '#f1f5f9', drawTicks: false },
-                                            ticks: {
-                                                font: { size: 11, family: 'Poppins', weight: '500' },
-                                                color: '#94a3b8',
-                                                callback: (v) => v >= 1000 ? `${(v/1000).toFixed(1)}k` : v,
-                                                padding: 12
+                        {mainChartData.labels.length > 0 ? (
+                            role === 'freelancer' ? (
+                                <Line 
+                                    data={mainChartData} 
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { 
+                                            legend: { display: false },
+                                            tooltip: {
+                                                mode: 'index',
+                                                intersect: false,
+                                                backgroundColor: '#1e293b',
+                                                titleFont: { family: 'Poppins', size: 13, weight: 'bold' },
+                                                bodyFont: { family: 'Poppins', size: 12 },
+                                                padding: 14,
+                                                cornerRadius: 10,
+                                                displayColors: true,
                                             }
                                         },
-                                        y: {
-                                            border: { display: false },
-                                            grid: { display: false },
-                                            ticks: {
-                                                font: { size: 11, family: 'Poppins', weight: '500' },
-                                                color: '#64748b',
-                                                padding: 12
+                                        scales: {
+                                            y: { 
+                                                beginAtZero: true,
+                                                border: { display: false }, 
+                                                grid: { color: '#f1f5f9', drawTicks: false }, 
+                                                ticks: { 
+                                                    font: { size: 11, family: 'Poppins', weight: '500' }, 
+                                                    color: '#94a3b8',
+                                                    padding: 12
+                                                } 
+                                            },
+                                            x: { 
+                                                border: { display: false }, 
+                                                grid: { display: false }, 
+                                                ticks: { 
+                                                    font: { size: 11, family: 'Poppins', weight: '500' }, 
+                                                    color: '#94a3b8',
+                                                    padding: 12
+                                                } 
                                             }
                                         }
-                                    }
-                                }}
-                            />
+                                    }}
+                                />
+                            ) : (
+                                <Bar 
+                                    data={barChartData}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { 
+                                            legend: { display: false },
+                                            tooltip: {
+                                                backgroundColor: '#1e293b',
+                                                titleFont: { family: 'Poppins', size: 13, weight: 'bold' },
+                                                bodyFont: { family: 'Poppins', size: 12 },
+                                                padding: 14,
+                                                cornerRadius: 10,
+                                                callbacks: {
+                                                    label: (context) => `Rs. ${context.parsed.y.toLocaleString()}`
+                                                }
+                                            }
+                                        },
+                                        scales: { 
+                                            y: { 
+                                                beginAtZero: true, 
+                                                border: { display: false },
+                                                grid: { color: '#f1f5f9', drawTicks: false },
+                                                ticks: { 
+                                                    color: '#94a3b8',
+                                                    callback: (v) => v >= 1000 ? `${(v/1000).toFixed(1)}k` : v,
+                                                    padding: 12
+                                                } 
+                                            }, 
+                                            x: { 
+                                                border: { display: false },
+                                                grid: { display: false },
+                                                ticks: { 
+                                                    color: '#94a3b8',
+                                                    padding: 12
+                                                } 
+                                            } 
+                                        } 
+                                    }}
+                                />
+                            )
                         ) : (
-                            <div className="flex items-center justify-center h-full">
-                                <p className="text-sm text-slate-400">No transaction data available</p>
+                            <div className="flex flex-col items-center justify-center h-full">
+                                <p className="text-sm text-slate-400">No projects yet</p>
                             </div>
                         )}
                     </div>
+
+                    <div className="pt-4 space-y-3 border-t border-slate-100">
+                        <LegendItem label="Completed" color="bg-emerald-500" value={stats.completedJobs} />
+                        <LegendItem label="Active" color="bg-blue-500" value={stats.activeProjects} />
+                        {role !== 'freelancer' && <LegendItem label="Archived" color="bg-slate-300" value="Old" />}
+                    </div>
                 </div>
+
+                {/* Project Status Distribution - Client Only */}
+                {role !== 'freelancer' && (
+                    <div className="p-6 transition-shadow duration-300 bg-white border rounded-lg shadow-sm border-slate-200 hover:shadow-md">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-base font-black leading-none tracking-wider uppercase text-slate-900">Project Status</h3>
+                                <p className="mt-2 text-xs font-medium text-slate-400">Distribution of your projects</p>
+                            </div>
+                        </div>
+                        <div className="p-2 rounded-lg h-80 bg-gradient-to-b from-slate-50/50 to-white">
+                            {doughnutData.labels.length > 0 ? (
+                                <Doughnut 
+                                    data={doughnutData}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'bottom',
+                                                labels: {
+                                                    font: { family: 'Poppins', size: 11, weight: '500' },
+                                                    color: '#64748b',
+                                                    padding: 16,
+                                                    boxWidth: 8,
+                                                    boxHeight: 8,
+                                                    usePointStyle: true
+                                                }
+                                            },
+                                            tooltip: {
+                                                backgroundColor: '#1e293b',
+                                                titleFont: { family: 'Poppins', size: 13, weight: 'bold' },
+                                                bodyFont: { family: 'Poppins', size: 12 },
+                                                padding: 14,
+                                                cornerRadius: 10,
+                                                callbacks: {
+                                                    label: (context) => `${context.label}: ${context.parsed} projects`
+                                                }
+                                            }
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full">
+                                    <FiBriefcase className="mb-2 text-3xl text-slate-300" />
+                                    <p className="text-sm text-slate-400">No project data available</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Freelancer Only - Earnings Summary & Additional Analytics */}
+                {role === 'freelancer' && (
+                    <>
+                        {/* Project Completion Status Chart */}
+                        <div className="p-6 transition-shadow duration-300 bg-white border rounded-lg shadow-sm border-slate-200 hover:shadow-md">
+                            <div className="mb-6">
+                                <h3 className="text-base font-black leading-none tracking-wider uppercase text-slate-900">Project Completion Status</h3>
+                                <p className="mt-2 text-xs font-medium text-slate-400">How much of each project is completed</p>
+                            </div>
+                            <div className="h-64 p-2 rounded-lg bg-gradient-to-b from-slate-50/50 to-white">
+                                {projectCompletionData.labels?.length > 0 ? (
+                                    <Bar
+                                        data={projectCompletionData}
+                                        options={{
+                                            indexAxis: 'y',
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: { display: false },
+                                                tooltip: {
+                                                    backgroundColor: '#1e293b',
+                                                    titleFont: { family: 'Poppins', size: 13, weight: 'bold' },
+                                                    bodyFont: { family: 'Poppins', size: 12 },
+                                                    padding: 14,
+                                                    cornerRadius: 10,
+                                                    callbacks: {
+                                                        label: (context) => `${context.parsed.x}% Completed`
+                                                    }
+                                                }
+                                            },
+                                            scales: {
+                                                x: {
+                                                    beginAtZero: true,
+                                                    max: 100,
+                                                    border: { display: false },
+                                                    grid: { color: '#f1f5f9', drawTicks: false },
+                                                    ticks: {
+                                                        font: { size: 11, family: 'Poppins', weight: '500' },
+                                                        color: '#94a3b8',
+                                                        callback: (v) => `${v}%`,
+                                                        padding: 12
+                                                    }
+                                                },
+                                                y: {
+                                                    border: { display: false },
+                                                    grid: { display: false },
+                                                    ticks: {
+                                                        font: { size: 10, family: 'Poppins', weight: '500' },
+                                                        color: '#64748b',
+                                                        padding: 8
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full">
+                                        <FiBriefcase className="mb-2 text-3xl text-slate-300" />
+                                        <p className="text-sm text-slate-400">No projects yet</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
+
                 </div>
 
                 {/* Right Sidebar - Transactions Only */}
@@ -443,18 +563,18 @@ const DashboardAnalytics = ({ role }) => {
                                     return (
                                         <div key={idx} className={`p-4 rounded-xl ${scheme.bg} border border-slate-100 hover:shadow-md transition-all duration-300`}>
                                             <div className="flex items-center justify-between mb-2">
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-sm font-black truncate text-slate-900 uppercase tracking-tight">{p.title}</p>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-black tracking-tight uppercase truncate text-slate-900">{p.title}</p>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100 uppercase">{p.status}</span>
                                                         <span className={`text-xs font-black ${scheme.text}`}>Rs. {p.amount.toLocaleString()}</span>
                                                     </div>
                                                 </div>
-                                                <div className="text-right ml-4">
+                                                <div className="ml-4 text-right">
                                                     <span className={`text-lg font-black ${scheme.text}`}>{p.progress}%</span>
                                                 </div>
                                             </div>
-                                            <div className="h-2 w-full bg-white/50 rounded-full overflow-hidden border border-slate-200/50">
+                                            <div className="w-full h-2 overflow-hidden border rounded-full bg-white/50 border-slate-200/50">
                                                 <div 
                                                     className={`h-full ${scheme.bar} transition-all duration-1000 ease-out`}
                                                     style={{ width: `${p.progress}%` }}
@@ -465,8 +585,42 @@ const DashboardAnalytics = ({ role }) => {
                                 })
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-6">
-                                    <FiBriefcase className="text-slate-300 text-3xl mb-2" />
+                                    <FiBriefcase className="mb-2 text-3xl text-slate-300" />
                                     <p className="text-xs text-slate-400">No active projects</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Completed Projects */}
+                    <div className="p-6 transition-all duration-300 bg-white border rounded-lg shadow-md border-slate-200 hover:shadow-lg">
+                        <div className="flex items-center justify-between mb-5">
+                            <div>
+                                    <h3 className="text-lg font-black tracking-wider uppercase text-slate-900">✓ Completed Projects</h3>
+                                    <p className="mt-2 text-xs font-medium text-slate-400">Successfully finished work</p>
+                            </div>
+                            <span className="inline-flex items-center justify-center w-8 h-8 text-sm font-black text-white rounded-full bg-emerald-500">{stats.completedJobs || 0}</span>
+                        </div>
+                        <div className="space-y-3">
+                                {analytics?.topProjects && analytics.topProjects.filter(p => p.progress === 100 || p.status === 'completed').length > 0 ? (
+                                    analytics.topProjects.filter(p => p.progress === 100 || p.status === 'completed').map((p, idx) => (
+                                        <div key={idx} className="p-3 transition-all duration-300 border rounded-lg cursor-pointer bg-emerald-50 border-emerald-100 hover:shadow-md hover:bg-emerald-100">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-white rounded-full bg-emerald-500">
+                                                <FiCheck size={16} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-black truncate text-emerald-900">{p.title}</p>
+                                                <p className="text-xs text-emerald-700 mt-0.5">Rs. {p.amount?.toLocaleString() || '0'}</p>
+                                                <p className="text-[10px] text-emerald-600 mt-1 font-semibold uppercase">100% Completed</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-6">
+                                    <FiCheck className="mb-2 text-3xl text-slate-300" />
+                                    <p className="text-xs text-slate-400">No completed projects yet</p>
                                 </div>
                             )}
                         </div>
@@ -494,7 +648,7 @@ const DashboardAnalytics = ({ role }) => {
                                             {activity.type === 'milestone' ? <FiCheck size={14} /> : <FiBriefcase size={14} />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">
+                                            <p className="text-xs font-bold tracking-tight uppercase text-slate-900">
                                                 {activity.type} {activity.action.replace('_', ' ')}
                                             </p>
                                             <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-1">{activity.target}</p>
@@ -506,7 +660,7 @@ const DashboardAnalytics = ({ role }) => {
                                 ))
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-8">
-                                    <FiActivity className="text-slate-300 text-3xl mb-2" />
+                                    <FiActivity className="mb-2 text-3xl text-slate-300" />
                                     <p className="text-xs text-slate-400">No recent activity</p>
                                 </div>
                             )}

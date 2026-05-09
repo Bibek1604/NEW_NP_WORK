@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router";
-import { FiStar } from "react-icons/fi";
 import capitalize from "../utils/capitalize";
 
 function JobListCard({ jobId, jobtitle, amount, freelancer, status }) {
@@ -48,12 +47,6 @@ function JobListCard({ jobId, jobtitle, amount, freelancer, status }) {
                         {freelancer && (
                             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded w-fit font-semibold">
                                 👤 Assigned
-                            </span>
-                        )}
-                        {freelancer && (
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
-                                <FiStar className="fill-current" />
-                                {Number(freelancer.rating || 0) > 0 ? Number(freelancer.rating).toFixed(1) : "N/A"}
                             </span>
                         )}
                     </div>

@@ -1,6 +1,5 @@
-import React from "react";
 import PropTypes from "prop-types";
-import { FiArrowRight, FiCalendar, FiStar, FiCheckCircle, FiClock, FiTrendingUp } from "react-icons/fi";
+import { FiArrowRight, FiCalendar } from "react-icons/fi";
 import default_avatar from "../assets/default_avatar.svg";
 import { Link } from "react-router";
 
@@ -13,13 +12,11 @@ function JobCard({ jobData }) {
         hourlyRate = 0,
         _id = "",
         createdAt = new Date(), // Fallback
-        recommendation,
     } = jobData;
 
     const postedByName = `${postedBy?.name?.firstName || "Client"} ${postedBy?.name?.lastName || ""}`.trim();
     const postedById = postedBy?._id || "";
     const postedByAvatar = postedBy?.avatar || default_avatar;
-    const postedByRating = Number(postedBy?.rating || 0);
 
     const statusStyles = {
         open: "bg-emerald-50 text-emerald-600 border-emerald-100 badge-icon-open",
@@ -41,15 +38,6 @@ function JobCard({ jobData }) {
 
     return (
         <div className="group w-80 bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 overflow-hidden flex flex-col relative">
-            <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-1">
-                <div className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">
-                    {Math.round(recommendation?.recommendationScore || 0)}% Match
-                </div>
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest border border-amber-200">
-                    <FiStar className="fill-current" />
-                    <span>{postedByRating > 0 ? postedByRating.toFixed(1) : "N/A"}</span>
-                </div>
-            </div>
             {/* Subtle Top Accent */}
             <div className="h-1 bg-gradient-to-r from-primary/80 to-primary/40"></div>
 

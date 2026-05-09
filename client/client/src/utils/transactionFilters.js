@@ -53,6 +53,11 @@ export const toTransactionApiParams = (filters = {}) => {
 export const applyTransactionFilters = (transactions = [], filters = {}) => {
     const normalized = normalizeTransactionFilters(filters);
 
+    const isSameCalendarDay = (leftDate, rightDate) =>
+        leftDate.getFullYear() === rightDate.getFullYear() &&
+        leftDate.getMonth() === rightDate.getMonth() &&
+        leftDate.getDate() === rightDate.getDate();
+
     return (transactions || []).filter((txn) => {
         const status = txn.paymentStatus || txn.status;
         const purpose = txn.purpose || "final";
@@ -62,16 +67,20 @@ export const applyTransactionFilters = (transactions = [], filters = {}) => {
         if (normalized.status !== "all" && normalized.status !== status) return false;
         if (normalized.purpose !== "all" && normalized.purpose !== purpose) return false;
 
-        if (normalized.startDate) {
-            const start = new Date(normalized.startDate);
-            if (!Number.isNaN(start.getTime()) && createdAt < start) return false;
-        }
+        if (normalized.startDate || normalized.endDate) {
+            const start = normalized.startDate ? new Date(normalized.startDate) : null;
+            const end = normalized.endDate ? new Date(normalized.endDate) : null;
 
-        if (normalized.endDate) {
-            const end = new Date(normalized.endDate);
-            if (!Number.isNaN(end.getTime())) {
+            if (start && Number.isNaN(start.getTime())) return true;
+            if (end && Number.isNaN(end.getTime())) return true;
+
+            if (start && end) {
                 end.setHours(23, 59, 59, 999);
-                if (createdAt > end) return false;
+                if (createdAt < start || createdAt > end) return false;
+            } else if (start) {
+                if (!isSameCalendarDay(createdAt, start)) return false;
+            } else if (end) {
+                if (!isSameCalendarDay(createdAt, end)) return false;
             }
         }
 

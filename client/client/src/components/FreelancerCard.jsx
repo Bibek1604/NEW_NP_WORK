@@ -1,14 +1,14 @@
-import React from "react";
-import { FiArrowRight, FiStar, FiCheckCircle, FiClock } from "react-icons/fi";
-import Tag from "./Tag";
+import { useEffect, useState } from "react";
+import api from "../utils/api";
+import { FiArrowRight, FiCheckCircle, FiClock, FiStar } from "react-icons/fi";
 import default_avatar from "../assets/default_avatar.svg";
 import { Link } from "react-router";
 import capitalize from "../utils/capitalize";
 
-function FreelancerCard({ userData, recommendationScore = 0, recommendationReasons = [], matchedProjectTitle = "", onInvite, inviteLabel = "Invite" }) {
+function FreelancerCard({ userData, recommendationReasons = [], matchedProjectTitle = "", onInvite, inviteLabel = "Invite" }) {
     const {
         avatar,
-        rating = 4.9, // Fallback for aesthetic
+        rating = 0,
         name = {},
         kycVerified,
         available,
@@ -19,18 +19,41 @@ function FreelancerCard({ userData, recommendationScore = 0, recommendationReaso
 
     const firstName = capitalize(name.firstName || "Freelancer");
     const lastName = capitalize(name.lastName || "");
-    const displayRating = Number(rating || 0);
+    const [displayRating, setDisplayRating] = useState(Number(rating || 0));
+
+    useEffect(() => {
+        let isActive = true;
+
+        const fetchRating = async () => {
+            if (!_id) {
+                return;
+            }
+
+            try {
+                const response = await api.get(`/reviews/rating/${_id}`);
+                const averageRating = Number(response.data?.data?.averageRating || 0);
+                if (isActive) {
+                    setDisplayRating(averageRating);
+                }
+            } catch (error) {
+                if (isActive) {
+                    setDisplayRating(Number(rating || 0));
+                }
+            }
+        };
+
+        fetchRating();
+
+        return () => {
+            isActive = false;
+        };
+    }, [_id, rating]);
 
     return (
         <div className="group w-72 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 overflow-hidden flex flex-col relative">
-            <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-1">
-                <div className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
-                    {Math.round(recommendationScore)}% Match
-                </div>
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest border border-amber-200">
-                    <FiStar className="fill-current" />
-                    <span>{displayRating > 0 ? displayRating.toFixed(1) : "N/A"}</span>
-                </div>
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest border border-amber-200">
+                <FiStar className="fill-current" />
+                <span>{displayRating.toFixed(1)}</span>
             </div>
             {/* Top Branding Strip */}
             <div className="h-2 bg-gradient-to-r from-primary to-indigo-600 w-0 group-hover:w-full transition-all duration-700"></div>

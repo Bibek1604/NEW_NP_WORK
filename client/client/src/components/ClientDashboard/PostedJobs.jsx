@@ -10,7 +10,6 @@ import {
     FiBriefcase, 
     FiPlus, 
     FiMoreVertical,
-    FiStar 
 } from "react-icons/fi";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
@@ -136,16 +135,6 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                                                             ? `${job?.acceptedFreelancer?.name?.firstName} ${job?.acceptedFreelancer?.name?.lastName}`
                                                             : "Unassigned"}
                                                     </span>
-                                                    {job?.acceptedFreelancer && (
-                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700">
-                                                            <FiStar className="fill-current" />
-                                                            <span>
-                                                                {Number(job?.acceptedFreelancer?.rating || 0) > 0
-                                                                    ? Number(job.acceptedFreelancer.rating).toFixed(1)
-                                                                    : "N/A"}
-                                                            </span>
-                                                        </span>
-                                                    )}
                                                 </span>
                                             </span>
                                         </td>
