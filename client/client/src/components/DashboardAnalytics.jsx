@@ -34,6 +34,21 @@ ChartJS.register(
 
 const DashboardAnalytics = ({ role }) => {
     const { userData } = useAuth();
+    // Helper: determine if current user profile looks complete enough
+    const isProfileComplete = (u) => {
+        if (!u) return false;
+        const hasName = Boolean(u?.name?.firstName || u?.name?.lastName);
+        const hasAvatar = Boolean(u?.avatar);
+        const hasBio = Boolean(u?.about || u?.bio || u?.description);
+        const hasBasic = hasName && (hasAvatar || hasBio);
+        // additional checks for freelancers
+        if (u?.role === 'freelancer') {
+            const hasSpecs = Array.isArray(u?.tags) ? u.tags.length > 0 : false;
+            const hasRate = Boolean(u?.hourlyRate);
+            return hasBasic && (hasSpecs || hasRate);
+        }
+        return hasBasic;
+    };
     const [fetching, setFetching] = useState(true);
     const [timeRange, setTimeRange] = useState("Monthly");
     const [stats, setStats] = useState({
@@ -50,12 +65,15 @@ const DashboardAnalytics = ({ role }) => {
     const [analytics, setAnalytics] = useState(null);
     const [earningsSummary, setEarningsSummary] = useState({ totalMonth: 0, growth: 0, nextMilestone: 0 });
     const [projectCompletionData, setProjectCompletionData] = useState({ labels: [], datasets: [] });
+    const [activeProjectView, setActiveProjectView] = useState("all"); // "all", "ongoing", "completed"
 
     useEffect(() => {
         const fetchAllData = async () => {
             setFetching(true);
             try {
-                const response = await api.get("/user/analytics");
+                const response = await api.get("/user/analytics", {
+                    params: { range: timeRange }
+                });
                 const data = response.data.data;
                 setAnalytics(data);
 
@@ -151,7 +169,7 @@ const DashboardAnalytics = ({ role }) => {
         };
 
         fetchAllData();
-    }, [userData, role]);
+    }, [userData, role, timeRange]);
 
     return (
         <div className="space-y-8 font-['Poppins',_sans-serif]">
@@ -178,8 +196,25 @@ const DashboardAnalytics = ({ role }) => {
                 </div>
             </div>
 
-            {/* Metrics Section with Enhanced Grid */}
-            <div className={`grid grid-cols-1 gap-4 ${role === 'freelancer' ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
+            {/* Profile completion banner */}
+            {!isProfileComplete(userData) && userData?._id && (
+                <div className="flex items-center justify-between p-4 mt-4 space-x-4 border border-yellow-100 rounded-lg bg-yellow-50">
+                    <div className="flex items-start gap-3">
+                        <FiAlertCircle className="text-yellow-600" size={20} />
+                        <div>
+                            <p className="text-sm font-bold text-yellow-800">Your profile looks incomplete</p>
+                            <p className="text-xs text-yellow-700">Keep your profile updated to attract better projects and payments.</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => window.location.href = `/profile/${userData._id}` } className="px-4 py-2 text-sm font-bold text-white rounded bg-primary hover:bg-primary/90">Update profile</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Metrics & Status Section */}
+            <div className={`grid grid-cols-1 gap-6 ${role === 'client' ? 'md:grid-cols-2' : 'lg:grid-cols-4'}`}>
+                {/* On-Time Rate Metric */}
                 <MetricTile 
                     label="On-Time Rate" 
                     value={`${analytics?.performance?.onTimePercentage || 0}%`} 
@@ -188,10 +223,48 @@ const DashboardAnalytics = ({ role }) => {
                     trend={analytics?.performance?.onTimePercentage > 80 ? "up" : "neutral"}
                 />
                 
-                {/* Freelancer Only - Earnings Summary in Metrics Row */}
+                {/* Project Status Monitoring - Now beside On-Time Rate for Clients */}
+                {role === 'client' && (
+                    <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
+                        <div className="flex items-center justify-between">
+                            <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
+                                <FiBriefcase className="text-blue-500" /> Project Status
+                            </h3>
+                            <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">Live</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div 
+                                onClick={() => setActiveProjectView("ongoing")} 
+                                className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'ongoing' ? 'bg-blue-100 border-blue-300 shadow-inner' : 'bg-blue-50 border-blue-100 hover:bg-blue-100'}`}
+                            >
+                                <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tighter">Running</p>
+                                <p className="text-xl font-black text-blue-600">{stats.activeProjects || 0}</p>
+                            </div>
+
+                            <div 
+                                onClick={() => setActiveProjectView("completed")} 
+                                className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'completed' ? 'bg-emerald-100 border-emerald-300 shadow-inner' : 'bg-emerald-50 border-emerald-100 hover:bg-emerald-100'}`}
+                            >
+                                <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
+                                <p className="text-xl font-black text-emerald-600">{stats.completedJobs || 0}</p>
+                            </div>
+
+                            <div 
+                                onClick={() => setActiveProjectView("all")} 
+                                className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'all' ? 'bg-slate-200 border-slate-400 shadow-inner' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
+                            >
+                                <p className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">Total</p>
+                                <p className="text-xl font-black text-slate-600">{stats.totalProjects || 0}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Freelancer Only Metrics */}
                 {role === 'freelancer' && (
                     <>
-                        <div onClick={() => window.location.href = '/earnings'} className="p-4 transition-all duration-300 border rounded-lg cursor-pointer group bg-gradient-to-br from-emerald-50 to-white border-emerald-200 hover:shadow-lg hover:scale-105 active:scale-95">
+                        <div onClick={() => window.location.href = 'http://localhost:5173/all-transactions'} className="p-4 transition-all duration-300 border rounded-lg cursor-pointer group bg-gradient-to-br from-emerald-50 to-white border-emerald-200 hover:shadow-lg hover:scale-105 active:scale-95">
                             <div className="flex items-center justify-between mb-2">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600">This Month</p>
                                 <FiArrowUpRight className="transition-transform text-emerald-600 group-hover:translate-x-1" size={14} />
@@ -200,7 +273,7 @@ const DashboardAnalytics = ({ role }) => {
                             <p className="text-[11px] text-emerald-600 mt-1 font-semibold">Total earnings</p>
                         </div>
 
-                        <div onClick={() => window.location.href = '/projects'} className="p-4 transition-all duration-300 border border-purple-200 rounded-lg cursor-pointer group bg-gradient-to-br from-purple-50 to-white hover:shadow-lg hover:scale-105 active:scale-95">
+                        <div onClick={() => window.location.href = 'http://localhost:5173/projects-workspace?filter=ongoing'} className="p-4 transition-all duration-300 border border-purple-200 rounded-lg cursor-pointer group bg-gradient-to-br from-purple-50 to-white hover:shadow-lg hover:scale-105 active:scale-95">
                             <div className="flex items-center justify-between mb-2">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-purple-600">Running</p>
                                 <FiBriefcase className="text-purple-600 transition-transform group-hover:scale-110" size={14} />
@@ -208,105 +281,105 @@ const DashboardAnalytics = ({ role }) => {
                             <h3 className="text-lg font-black text-purple-700">{stats.activeProjects || 0}</h3>
                             <p className="text-[11px] text-purple-600 mt-1 font-semibold">Projects in progress</p>
                         </div>
+
+                        {/* Filler tile for 4-col layout */}
+                        <MetricTile 
+                            label="Success Rate" 
+                            value={`${analytics?.performance?.completionRate || 0}%`} 
+                            subValue="Project completion"
+                            icon={<FiCheck />}
+                            trend="neutral"
+                        />
                     </>
                 )}
             </div>
 
-            {/* Specialized Sections - Deadlines & Performance */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                 {/* Deadline Monitoring */}
-                 <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
-                    <div className="flex items-center justify-between">
-                        <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
-                            <FiAlertCircle className="text-rose-500" /> Deadline Monitor
-                        </h3>
-                        <span className="text-[10px] font-bold bg-rose-50 text-rose-600 px-2 py-1 rounded">Real-time</span>
-                    </div>
-                    
-                    <div className="space-y-3">
-                        {analytics?.deadlines?.overdue?.length > 0 && (
-                            <div className="space-y-2">
-                                <p className="text-[10px] font-bold text-rose-500 uppercase tracking-tighter">⚠️ Overdue</p>
-                                {analytics.deadlines.overdue.map((d, i) => (
-                                    <div key={i} className="flex items-center justify-between p-2 text-xs border rounded-lg bg-rose-50 border-rose-100">
-                                        <div>
-                                            <p className="font-bold text-rose-900">{d.title}</p>
-                                            <p className="text-rose-700 opacity-70">{d.projectName}</p>
-                                        </div>
-                                        <p className="font-black text-rose-600">{new Date(d.deadline).toLocaleDateString()}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+            {/* Specialized Sections - Only for Freelancers (since Deadline Monitor is hidden for clients) */}
+            {role !== 'client' && (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    {/* Deadline Monitoring */}
+                    <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
+                        <div className="flex items-center justify-between">
+                            <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
+                                <FiAlertCircle className="text-rose-500" /> Deadline Monitor
+                            </h3>
+                            <span className="text-[10px] font-bold bg-rose-50 text-rose-600 px-2 py-1 rounded">Real-time</span>
+                        </div>
                         
-                        <div className="space-y-2">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">📅 Upcoming (Next 7 Days)</p>
-                            {analytics?.deadlines?.upcoming?.length > 0 ? (
-                                analytics.deadlines.upcoming.map((d, i) => (
-                                    <div key={i} className="flex items-center justify-between p-2 text-xs border rounded-lg bg-slate-50 border-slate-100">
-                                        <div>
-                                            <p className="font-bold text-slate-900">{d.title}</p>
-                                            <p className="text-slate-500">{d.projectName}</p>
+                        <div className="space-y-3">
+                            {analytics?.deadlines?.overdue?.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-bold text-rose-500 uppercase tracking-tighter">⚠️ Overdue</p>
+                                    {analytics.deadlines.overdue.map((d, i) => (
+                                        <div key={i} className="flex items-center justify-between p-2 text-xs border rounded-lg bg-rose-50 border-rose-100">
+                                            <div>
+                                                <p className="font-bold text-rose-900">{d.title}</p>
+                                                <p className="text-rose-700 opacity-70">{d.projectName}</p>
+                                            </div>
+                                            <p className="font-black text-rose-600">{new Date(d.deadline).toLocaleDateString()}</p>
                                         </div>
-                                        <p className="font-black text-slate-600">{new Date(d.deadline).toLocaleDateString()}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-xs italic text-slate-400">No tight deadlines approaching</p>
+                                    ))}
+                                </div>
                             )}
+                            
+                            <div className="space-y-2">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">📅 Upcoming (Next 7 Days)</p>
+                                {analytics?.deadlines?.upcoming?.length > 0 ? (
+                                    analytics.deadlines.upcoming.map((d, i) => (
+                                        <div key={i} className="flex items-center justify-between p-2 text-xs border rounded-lg bg-slate-50 border-slate-100">
+                                            <div>
+                                                <p className="font-bold text-slate-900">{d.title}</p>
+                                                <p className="text-slate-500">{d.projectName}</p>
+                                            </div>
+                                            <p className="font-black text-slate-600">{new Date(d.deadline).toLocaleDateString()}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-xs italic text-slate-400">No tight deadlines approaching</p>
+                                )}
+                            </div>
                         </div>
                     </div>
-                 </div>
 
-                 {/* Projects Monitoring */}
-                 <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
-                    <div className="flex items-center justify-between">
-                        <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
-                            <FiBriefcase className="text-blue-500" /> Project Status
-                        </h3>
-                        <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">Live</span>
-                    </div>
-                    
-                    <div className="space-y-3">
-                            <button onClick={() => window.location.href = '/projects'} className="w-full p-3 text-sm font-black tracking-widest text-white uppercase transition-all duration-300 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg hover:scale-105 active:scale-95">
-                                → Ongoing Projects
-                            </button>
-
-                        <div onClick={() => window.location.href = '/projects'} className="flex items-center justify-between p-3 transition-all duration-300 border border-blue-100 rounded-lg cursor-pointer bg-blue-50 group hover:shadow-md hover:bg-blue-100 active:scale-95">
-                            <div className="flex items-center gap-3">
-                                <FiBriefcase className="text-blue-500 transition-transform group-hover:scale-110" size={20} />
-                                <div>
-                                    <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">Running Projects</p>
-                                    <p className="text-xs text-blue-900 font-bold mt-0.5">{stats.activeProjects || 0} in progress</p>
-                                </div>
-                            </div>
-                            <p className="text-2xl font-black text-blue-600">{stats.activeProjects || 0}</p>
+                    {/* Projects Monitoring - Duplicate for Freelancer to keep side-by-side with deadlines */}
+                    <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
+                        <div className="flex items-center justify-between">
+                            <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
+                                <FiBriefcase className="text-blue-500" /> Project Status
+                            </h3>
+                            <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">Live</span>
                         </div>
-
-                        <div onClick={() => window.location.href = '/completed-projects'} className="flex items-center justify-between p-3 transition-all duration-300 border rounded-lg cursor-pointer bg-emerald-50 border-emerald-100 group hover:shadow-md hover:bg-emerald-100 active:scale-95">
-                            <div className="flex items-center gap-3">
-                                <FiCheck className="transition-transform text-emerald-500 group-hover:scale-110" size={20} />
-                                <div>
-                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
-                                    <p className="text-xs text-emerald-900 font-bold mt-0.5">{stats.completedJobs || 0} projects finished</p>
+                        
+                        <div className="space-y-3">
+                                <button onClick={() => window.location.href = 'http://localhost:5173/projects-workspace?filter=ongoing'} className="w-full p-3 text-sm font-black tracking-widest text-white uppercase transition-all duration-300 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg hover:scale-105 active:scale-95">
+                                    → Ongoing Projects
+                                </button>
+    
+                            <div onClick={() => window.location.href = 'http://localhost:5173/projects-workspace?filter=ongoing'} className="flex items-center justify-between p-3 transition-all duration-300 border border-blue-100 rounded-lg cursor-pointer bg-blue-50 group hover:shadow-md hover:bg-blue-100 active:scale-95">
+                                <div className="flex items-center gap-3">
+                                    <FiBriefcase className="text-blue-500 transition-transform group-hover:scale-110" size={20} />
+                                    <div>
+                                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">Running Projects</p>
+                                        <p className="text-xs text-blue-900 font-bold mt-0.5">{stats.activeProjects || 0} in progress</p>
+                                    </div>
                                 </div>
+                                <p className="text-2xl font-black text-blue-600">{stats.activeProjects || 0}</p>
                             </div>
-                            <p className="text-2xl font-black text-emerald-600">{stats.completedJobs || 0}</p>
-                        </div>
-
-                        <div onClick={() => window.location.href = '/projects'} className="flex items-center justify-between p-3 transition-all duration-300 border rounded-lg cursor-pointer bg-slate-50 border-slate-100 group hover:shadow-md hover:bg-slate-100 active:scale-95">
-                            <div className="flex items-center gap-3">
-                                <FiActivity className="transition-transform text-slate-500 group-hover:scale-110" size={20} />
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">Total Projects</p>
-                                    <p className="text-xs text-slate-900 font-bold mt-0.5">{stats.totalProjects || 0} all time</p>
+    
+                            <div onClick={() => window.location.href = 'http://localhost:5173/projects-workspace?filter=completed'} className="flex items-center justify-between p-3 transition-all duration-300 border rounded-lg cursor-pointer bg-emerald-50 border-emerald-100 group hover:shadow-md hover:bg-emerald-100 active:scale-95">
+                                <div className="flex items-center gap-3">
+                                    <FiCheck className="transition-transform text-emerald-500 group-hover:scale-110" size={20} />
+                                    <div>
+                                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
+                                        <p className="text-xs text-emerald-900 font-bold mt-0.5">{stats.completedJobs || 0} projects finished</p>
+                                    </div>
                                 </div>
+                                <p className="text-2xl font-black text-emerald-600">{stats.completedJobs || 0}</p>
                             </div>
-                            <p className="text-2xl font-black text-slate-600">{stats.totalProjects || 0}</p>
                         </div>
                     </div>
-                 </div>
-            </div>
+                </div>
+            )}
 
             {/* Main Content with Sidebar Layout */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -422,7 +495,7 @@ const DashboardAnalytics = ({ role }) => {
                     <div className="pt-4 space-y-3 border-t border-slate-100">
                         <LegendItem label="Completed" color="bg-emerald-500" value={stats.completedJobs} />
                         <LegendItem label="Active" color="bg-blue-500" value={stats.activeProjects} />
-                        {role !== 'freelancer' && <LegendItem label="Archived" color="bg-slate-300" value="Old" />}
+                        {/* Archived legend removed per request */}
                     </div>
                 </div>
 
@@ -548,83 +621,89 @@ const DashboardAnalytics = ({ role }) => {
 
                 {/* Right Sidebar - Transactions Only */}
                 <div className="space-y-6">
-                    {/* Top Categories */}
+                    {/* Top Projects / Filtered Project List */}
                     <div className="p-6 transition-all duration-300 bg-white border rounded-lg shadow-md border-slate-200 hover:shadow-lg">
+                        <div className="flex items-center justify-between mb-5">
+                            <div>
+                                <h3 className="text-lg font-black tracking-wider uppercase text-slate-900">
+                                    {activeProjectView === 'all' ? 'Project Explorer' : `${activeProjectView} Projects`}
+                                </h3>
+                                <p className="mt-2 text-xs font-medium text-slate-400">
+                                    {activeProjectView === 'all' ? 'Overview of your portfolio' : `Viewing ${activeProjectView} project list`}
+                                </p>
+                            </div>
+                            {activeProjectView !== 'all' && (
+                                <button 
+                                    onClick={() => setActiveProjectView("all")}
+                                    className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                                >
+                                    Reset Filter
+                                </button>
+                            )}
+                        </div>
+
                         <div className="space-y-4">
-                            {analytics?.topProjects?.length > 0 ? (
-                                analytics.topProjects.map((p, idx) => {
-                                    const colorSchemes = [
-                                        { bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-500' },
-                                        { bg: 'bg-blue-50', text: 'text-blue-700', bar: 'bg-blue-500' },
-                                        { bg: 'bg-purple-50', text: 'text-purple-700', bar: 'bg-purple-500' }
-                                    ];
-                                    const scheme = colorSchemes[idx % 3];
-                                    
-                                    return (
-                                        <div key={idx} className={`p-4 rounded-xl ${scheme.bg} border border-slate-100 hover:shadow-md transition-all duration-300`}>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-black tracking-tight uppercase truncate text-slate-900">{p.title}</p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100 uppercase">{p.status}</span>
-                                                        <span className={`text-xs font-black ${scheme.text}`}>Rs. {p.amount.toLocaleString()}</span>
+                            {(analytics?.financials?.breakdown || [])
+                                .filter(p => {
+                                    if (activeProjectView === 'ongoing') return ['assigned', 'in_progress', 'contract_pending'].includes(p.status);
+                                    if (activeProjectView === 'completed') return ['completed', 'paid'].includes(p.status);
+                                    return true;
+                                })
+                                .length > 0 ? (
+                                (analytics?.financials?.breakdown || [])
+                                    .filter(p => {
+                                        if (activeProjectView === 'ongoing') return ['assigned', 'in_progress', 'contract_pending'].includes(p.status);
+                                        if (activeProjectView === 'completed') return ['completed', 'paid'].includes(p.status);
+                                        return true;
+                                    })
+                                    .slice(0, 8)
+                                    .map((p, idx) => {
+                                        const isOngoing = ['assigned', 'in_progress', 'contract_pending'].includes(p.status);
+                                        const isCompleted = ['completed', 'paid'].includes(p.status);
+                                        
+                                        const scheme = isCompleted 
+                                            ? { bg: 'bg-emerald-50', text: 'text-emerald-700', bar: 'bg-emerald-500' }
+                                            : isOngoing
+                                                ? { bg: 'bg-blue-50', text: 'text-blue-700', bar: 'bg-blue-500' }
+                                                : { bg: 'bg-slate-50', text: 'text-slate-700', bar: 'bg-slate-400' };
+                                        
+                                        return (
+                                            <div 
+                                                key={idx} 
+                                                onClick={() => window.location.href = `/projects-workspace?id=${p.id}`}
+                                                className={`p-4 rounded-xl ${scheme.bg} border border-slate-100 hover:shadow-md transition-all duration-300 cursor-pointer`}
+                                            >
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-black tracking-tight uppercase truncate text-slate-900">{p.title}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className={`text-[10px] font-bold bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100 uppercase ${scheme.text}`}>{p.status}</span>
+                                                            <span className={`text-xs font-black ${scheme.text}`}>Rs. {p.amount.toLocaleString()}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="ml-4 text-right">
+                                                        <span className={`text-lg font-black ${scheme.text}`}>{p.progress}%</span>
                                                     </div>
                                                 </div>
-                                                <div className="ml-4 text-right">
-                                                    <span className={`text-lg font-black ${scheme.text}`}>{p.progress}%</span>
+                                                <div className="w-full h-2 overflow-hidden border rounded-full bg-white/50 border-slate-200/50">
+                                                    <div 
+                                                        className={`h-full ${scheme.bar} transition-all duration-1000 ease-out`}
+                                                        style={{ width: `${p.progress}%` }}
+                                                    ></div>
                                                 </div>
                                             </div>
-                                            <div className="w-full h-2 overflow-hidden border rounded-full bg-white/50 border-slate-200/50">
-                                                <div 
-                                                    className={`h-full ${scheme.bar} transition-all duration-1000 ease-out`}
-                                                    style={{ width: `${p.progress}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
+                                        );
+                                    })
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-6">
                                     <FiBriefcase className="mb-2 text-3xl text-slate-300" />
-                                    <p className="text-xs text-slate-400">No active projects</p>
+                                    <p className="text-xs text-slate-400">No {activeProjectView} projects found</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Completed Projects */}
-                    <div className="p-6 transition-all duration-300 bg-white border rounded-lg shadow-md border-slate-200 hover:shadow-lg">
-                        <div className="flex items-center justify-between mb-5">
-                            <div>
-                                    <h3 className="text-lg font-black tracking-wider uppercase text-slate-900">✓ Completed Projects</h3>
-                                    <p className="mt-2 text-xs font-medium text-slate-400">Successfully finished work</p>
-                            </div>
-                            <span className="inline-flex items-center justify-center w-8 h-8 text-sm font-black text-white rounded-full bg-emerald-500">{stats.completedJobs || 0}</span>
-                        </div>
-                        <div className="space-y-3">
-                                {analytics?.topProjects && analytics.topProjects.filter(p => p.progress === 100 || p.status === 'completed').length > 0 ? (
-                                    analytics.topProjects.filter(p => p.progress === 100 || p.status === 'completed').map((p, idx) => (
-                                        <div key={idx} className="p-3 transition-all duration-300 border rounded-lg cursor-pointer bg-emerald-50 border-emerald-100 hover:shadow-md hover:bg-emerald-100">
-                                        <div className="flex items-start gap-3">
-                                            <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 text-white rounded-full bg-emerald-500">
-                                                <FiCheck size={16} />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-black truncate text-emerald-900">{p.title}</p>
-                                                <p className="text-xs text-emerald-700 mt-0.5">Rs. {p.amount?.toLocaleString() || '0'}</p>
-                                                <p className="text-[10px] text-emerald-600 mt-1 font-semibold uppercase">100% Completed</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-6">
-                                    <FiCheck className="mb-2 text-3xl text-slate-300" />
-                                    <p className="text-xs text-slate-400">No completed projects yet</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+ 
 
                     {/* Recent Transactions */}
                     <div className="p-6 transition-all duration-300 bg-white border rounded-lg shadow-md border-slate-200 hover:shadow-lg">

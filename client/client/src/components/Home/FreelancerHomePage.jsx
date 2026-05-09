@@ -28,7 +28,7 @@ function FreelancerHomePage({ userData }) {
     // Calculate stats from jobs
     const calculateStats = (jobsList) => {
         if (jobsList.length === 0) {
-            return { avgValue: "N/A", totalJobs: 0 };
+            return { avgValue: "Rs. 0", totalJobs: 0 };
         }
         
         const totalBudget = jobsList.reduce((sum, job) => {
@@ -39,7 +39,7 @@ function FreelancerHomePage({ userData }) {
         const avgValue = jobsList.length > 0 ? Math.round(totalBudget / jobsList.length) : 0;
         
         return {
-            avgValue: avgValue > 0 ? `Rs. ${avgValue.toLocaleString()}` : "N/A",
+            avgValue: `Rs. ${avgValue.toLocaleString()}`,
             totalJobs: jobsList.length
         };
     };
@@ -89,7 +89,7 @@ function FreelancerHomePage({ userData }) {
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         {/* Available Projects Card */}
                         <div className="bg-emerald-50/50 border border-emerald-200/30 rounded-lg p-5 hover:shadow-md hover:border-emerald-200/60 transition-all group">
                             <div className="flex items-center justify-between mb-4">
@@ -101,19 +101,6 @@ function FreelancerHomePage({ userData }) {
                             <h3 className="font-semibold text-slate-700 text-xs mb-1">Available Projects</h3>
                             <p className="text-3xl font-bold text-slate-900">{jobs.length}</p>
                             <p className="text-xs text-slate-500 mt-1">Updated live</p>
-                        </div>
-
-                        {/* Avg. Project Value Card */}
-                        <div className="bg-blue-50/50 border border-blue-200/30 rounded-lg p-5 hover:shadow-md hover:border-blue-200/60 transition-all group">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-                                    <FiTrendingUp className="text-blue-600 text-lg" />
-                                </div>
-                                <span className="text-2xl opacity-20">💰</span>
-                            </div>
-                            <h3 className="font-semibold text-slate-700 text-xs mb-1">Avg. Project Value</h3>
-                            <p className="text-3xl font-bold text-slate-900">{stats.avgValue}</p>
-                            <p className="text-xs text-slate-500 mt-1">{jobs.length > 0 ? 'Calculated from listings' : 'No data available'}</p>
                         </div>
                     </div>
 

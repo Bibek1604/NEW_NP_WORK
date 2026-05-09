@@ -5,7 +5,14 @@ import default_avatar from "../assets/default_avatar.svg";
 import { Link } from "react-router";
 import capitalize from "../utils/capitalize";
 
-function FreelancerCard({ userData, recommendationReasons = [], matchedProjectTitle = "", onInvite, inviteLabel = "Invite" }) {
+function FreelancerCard({
+    userData,
+    recommendationScore = 0,
+    recommendationReasons = [],
+    matchedProjectTitle = "",
+    onInvite,
+    inviteLabel = "Invite"
+}) {
     const {
         avatar,
         rating = 0,
@@ -49,15 +56,25 @@ function FreelancerCard({ userData, recommendationReasons = [], matchedProjectTi
         };
     }, [_id, rating]);
 
+    // Color logic for match score
+    const getScoreColor = (score) => {
+        if (score >= 80) return "text-emerald-600 bg-emerald-50 border-emerald-100";
+        if (score >= 50) return "text-primary bg-primary/5 border-primary/10";
+        return "text-slate-500 bg-slate-50 border-slate-100";
+    };
+
     return (
-        <div className="group w-72 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 overflow-hidden flex flex-col relative">
+        <div className="group w-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 overflow-hidden flex flex-col relative">
+
+
             <div className="absolute top-4 right-4 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest border border-amber-200">
                 <FiStar className="fill-current" />
                 <span>{displayRating.toFixed(1)}</span>
             </div>
+
             {/* Top Branding Strip */}
             <div className="h-2 bg-gradient-to-r from-primary to-indigo-600 w-0 group-hover:w-full transition-all duration-700"></div>
-            
+
             <div className="p-6 space-y-5 flex-1 flex flex-col">
                 {/* Profile Header */}
                 <div className="flex items-start justify-between">
@@ -75,7 +92,7 @@ function FreelancerCard({ userData, recommendationReasons = [], matchedProjectTi
                             </div>
                         )}
                     </div>
-                    
+
                     <div className="flex flex-col items-end pt-10">
                         <span className={`text-[10px] font-black uppercase tracking-widest mt-2 ${available ? 'text-emerald-500' : 'text-red-400'}`}>
                             {available ? 'Available Now' : 'Busy'}
@@ -93,14 +110,14 @@ function FreelancerCard({ userData, recommendationReasons = [], matchedProjectTi
                         <span>Active 2h ago</span>
                     </div>
                     {matchedProjectTitle && (
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                            Matched project: <span className="text-slate-900">{matchedProjectTitle}</span>
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 pt-1">
+                            Matched to: <span className="text-slate-900">{matchedProjectTitle}</span>
                         </div>
                     )}
                     {recommendationReasons.length > 0 && (
-                        <div className="flex flex-wrap gap-1 pt-1">
-                            {recommendationReasons.slice(0, 2).map((reason) => (
-                                <span key={reason} className="text-[10px] font-bold text-primary bg-primary/5 border border-primary/10 px-2 py-1 rounded-md">
+                        <div className="flex flex-wrap gap-1 pt-2">
+                            {recommendationReasons.slice(0, 3).map((reason) => (
+                                <span key={reason} className="text-[9px] font-bold text-primary bg-primary/5 border border-primary/10 px-2 py-1 rounded-md">
                                     {reason}
                                 </span>
                             ))}
@@ -133,7 +150,7 @@ function FreelancerCard({ userData, recommendationReasons = [], matchedProjectTi
                         {onInvite && (
                             <button
                                 onClick={onInvite}
-                                className="px-3 py-2 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all"
+                                className="px-3 py-2 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all shadow-sm hover:shadow-md"
                             >
                                 {inviteLabel}
                             </button>

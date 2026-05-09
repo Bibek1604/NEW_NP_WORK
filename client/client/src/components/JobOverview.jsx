@@ -37,9 +37,97 @@ function JobOverview({ jobId, jobData, isSelectedFreelancer }) {
     const downloadContractPdf = async () => {
         try {
             const response = await api.get(`/jobs/${jobId}/contract/pdf`, {
-                responseType: "blob",
+                responseType: "arraybuffer",
             });
-            const pdfUrl = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+
+            const existingPdfBytes = response.data;
+
+            // Try to dynamically import pdf-lib. If unavailable, fallback to direct download.
+            let PDFDocument = null;
+            try {
+                const pdfLib = await import("pdf-lib");
+                PDFDocument = pdfLib.PDFDocument;
+            } catch (err) {
+                PDFDocument = null;
+            }
+
+            if (!PDFDocument) {
+                // Fallback: save original PDF without logo
+                const pdfUrl = window.URL.createObjectURL(new Blob([existingPdfBytes], { type: "application/pdf" }));
+                const link = document.createElement("a");
+                link.href = pdfUrl;
+                link.setAttribute("download", `contract-${jobId}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(pdfUrl);
+                toast.success("Contract PDF downloaded");
+                return;
+            }
+
+            // Load existing PDF and create a new PDF with logo page prepended
+            const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
+            const newPdfDoc = await PDFDocument.create();
+
+            // Fetch SVG logo, rasterize to PNG via canvas, then embed
+            const svgResponse = await fetch("/src/assets/logo.svg");
+            const svgText = await svgResponse.text();
+
+            const svgToPngArrayBuffer = async (svgStr, width = 300, height = 80) => {
+                const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.src = url;
+                await new Promise((resolve, reject) => {
+                    img.onload = () => resolve();
+                    img.onerror = (e) => reject(e);
+                });
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL("image/png");
+                URL.revokeObjectURL(url);
+                const res = await fetch(dataUrl);
+                return await res.arrayBuffer();
+            };
+
+            let pngBytes = null;
+            try {
+                // produce a smaller PNG for the PDF header
+                pngBytes = await svgToPngArrayBuffer(svgText, 220, 60);
+            } catch (err) {
+                // fallback: ignore logo if rasterization fails
+                console.error("Failed to rasterize logo SVG", err);
+            }
+
+            if (pngBytes) {
+                const logoImage = await newPdfDoc.embedPng(pngBytes);
+                const logoDims = { width: logoImage.width, height: logoImage.height };
+                const page = newPdfDoc.addPage([595, 842]);
+                const maxWidth = 220;
+                const drawWidth = Math.min(logoDims.width, maxWidth);
+                const drawHeight = (logoDims.height * drawWidth) / logoDims.width;
+                const x = (595 - drawWidth) / 2;
+                // position a bit lower so it doesn't crowd the top
+                page.drawImage(logoImage, {
+                    x,
+                    y: 842 - drawHeight - 60,
+                    width: drawWidth,
+                    height: drawHeight,
+                });
+            }
+
+            // Copy existing pages
+            const copiedPages = await newPdfDoc.copyPages(existingPdfDoc, existingPdfDoc.getPageIndices());
+            copiedPages.forEach((p) => newPdfDoc.addPage(p));
+
+            const newPdfBytes = await newPdfDoc.save();
+            const blob = new Blob([newPdfBytes], { type: "application/pdf" });
+            const pdfUrl = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = pdfUrl;
             link.setAttribute("download", `contract-${jobId}.pdf`);
@@ -47,7 +135,7 @@ function JobOverview({ jobId, jobData, isSelectedFreelancer }) {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(pdfUrl);
-            toast.success("Contract PDF downloaded");
+            toast.success("Contract PDF downloaded (with logo)");
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to download contract PDF");
         }

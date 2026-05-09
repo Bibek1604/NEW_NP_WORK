@@ -49,7 +49,7 @@ const PostedJobs = ({ showPostJobModalFn }) => {
         in_progress: { label: "In Progress", style: "bg-amber-50 text-amber-700 border-amber-200" },
         pending_review: { label: "Review Required", style: "bg-indigo-50 text-indigo-700 border-indigo-200" },
         completed: { label: "Finalized", style: "bg-slate-50 text-slate-600 border-slate-200" },
-        closed: { label: "Archived", style: "bg-slate-100 text-slate-500 border-slate-200" },
+        closed: { label: "Closed", style: "bg-slate-100 text-slate-500 border-slate-200" },
         paid: { label: "Settled", style: "bg-emerald-100 text-emerald-800 border-emerald-300" },
     };
 
@@ -74,7 +74,7 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                     </div>
 
                     <div className="flex items-center gap-1.5 p-1 bg-slate-50 border border-slate-200 rounded">
-                        {["all", "open", "ongoing", "completed"].map((filter) => (
+                        {["all", "open", "ongoing", "completed", "closed"].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setSelectedFilter(filter)}

@@ -8,7 +8,12 @@ function Logout() {
     const { logout, clearUserData, disconnectSocket } = useAuth();
     const navigate = useNavigate();
     
+    const hasLoggedOut = React.useRef(false);
+    
     useEffect(() => {
+        if (hasLoggedOut.current) return;
+        hasLoggedOut.current = true;
+
         // Step 1: Disconnect socket
         disconnectSocket();
         
@@ -22,7 +27,7 @@ function Logout() {
         logout();
         
         // Step 5: Show success message
-        toast.success("Logged Out Successfully");
+        toast.success("Logged Out Successfully", { id: "logout-success" });
         
         // Step 6: Redirect to login page
         navigate("/login", { replace: true });

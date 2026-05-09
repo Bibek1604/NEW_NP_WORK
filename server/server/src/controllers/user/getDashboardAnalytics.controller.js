@@ -3,25 +3,35 @@ import { ApiError, ApiResponse, asyncHandler } from "../../utils/index.js";
 
 export const getDashboardAnalytics = asyncHandler(async (req, res) => {
     const userId = req.user.id;
-    const role = req.user.role; // 'client' or 'freelancer'
+    const role = req.user.role; 
+    const { range } = req.query; 
 
     const now = new Date();
+    let startDate = null;
 
-    // 1. Fetch relevant jobs
+    if (range === "Monthly") {
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    } else if (range === "Quarterly") {
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    } else if (range === "Annual") {
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+    }
+
     const jobsQuery = role === "freelancer" 
         ? { acceptedFreelancer: userId } 
         : { postedBy: userId };
     
     const jobs = await Job.find(jobsQuery).populate("postedBy acceptedFreelancer");
 
-    // 2. Fetch milestones for these jobs
     const jobIds = jobs.map(j => j._id);
-    const milestones = await Milestone.find({ projectId: { $in: jobIds } }).sort({ deadline: 1 });
+    const milestonesQuery = { projectId: { $in: jobIds } };
+    if (startDate) milestonesQuery.updatedAt = { $gte: startDate };
+    const milestones = await Milestone.find(milestonesQuery).sort({ deadline: 1 });
 
-    // 3. Fetch transactions
     const transactionsQuery = role === "freelancer"
         ? { receiver: userId }
         : { initiator: userId };
+    if (startDate) transactionsQuery.createdAt = { $gte: startDate };
     const transactions = await Transaction.find(transactionsQuery).sort({ createdAt: -1 });
 
     // --- Calculations ---
