@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { Line, Doughnut, Bar } from "react-chartjs-2";
 import {
     Chart as ChartJS,
@@ -33,6 +34,7 @@ ChartJS.register(
 );
 
 const DashboardAnalytics = ({ role }) => {
+    const navigate = useNavigate();
     const { userData } = useAuth();
     // Helper: determine if current user profile looks complete enough
     const isProfileComplete = (u) => {
@@ -209,7 +211,7 @@ const DashboardAnalytics = ({ role }) => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => window.location.href = `/profile/${userData._id}` } className="px-4 py-2 text-sm font-bold text-white rounded bg-primary hover:bg-primary/90">Update profile</button>
+                        <button onClick={() => navigate(`/profile/${userData._id}`)} className="px-4 py-2 text-sm font-bold text-white rounded bg-primary hover:bg-primary/90">Update profile</button>
                     </div>
                 </div>
             )}
@@ -227,54 +229,76 @@ const DashboardAnalytics = ({ role }) => {
                 
                 {/* Project Status Monitoring - Now beside On-Time Rate for Clients */}
                 {role === 'client' && (
-                    <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
-                        <div className="flex items-center justify-between">
-                            <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
-                                <FiBriefcase className="text-blue-500" /> Project Status
-                            </h3>
-                            <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">Live</span>
+                    <>
+                        <div className="p-6 space-y-4 bg-white border shadow-sm border-slate-200 rounded-xl">
+                            <div className="flex items-center justify-between">
+                                <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
+                                    <FiBriefcase className="text-blue-500" /> Project Status
+                                </h3>
+                                <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">Live</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div 
+                                    onClick={() => setActiveProjectView("ongoing")} 
+                                    className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'ongoing' ? 'bg-blue-100 border-blue-300 shadow-inner' : 'bg-blue-50 border-blue-100 hover:bg-blue-100'}`}
+                                >
+                                    <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tighter">Running</p>
+                                    <p className="text-xl font-black text-blue-600">{stats.activeProjects || 0}</p>
+                                </div>
+
+                                <div 
+                                    onClick={() => setActiveProjectView("completed")} 
+                                    className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'completed' ? 'bg-emerald-100 border-emerald-300 shadow-inner' : 'bg-emerald-50 border-emerald-100 hover:bg-emerald-100'}`}
+                                >
+                                    <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
+                                    <p className="text-xl font-black text-emerald-600">{stats.completedJobs || 0}</p>
+                                </div>
+
+                                <div 
+                                    onClick={() => setActiveProjectView("pending")} 
+                                    className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'pending' ? 'bg-amber-100 border-amber-300 shadow-inner' : 'bg-amber-50 border-amber-100 hover:bg-amber-100'}`}
+                                >
+                                    <p className="text-[9px] font-bold text-amber-600 uppercase tracking-tighter">Pending</p>
+                                    <p className="text-xl font-black text-amber-600">{stats.pendingProjects || 0}</p>
+                                </div>
+
+                                <div 
+                                    onClick={() => setActiveProjectView("all")} 
+                                    className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'all' ? 'bg-slate-200 border-slate-400 shadow-inner' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
+                                >
+                                    <p className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">Total</p>
+                                    <p className="text-xl font-black text-slate-600">{stats.totalProjects || 0}</p>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div 
-                                onClick={() => setActiveProjectView("ongoing")} 
-                                className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'ongoing' ? 'bg-blue-100 border-blue-300 shadow-inner' : 'bg-blue-50 border-blue-100 hover:bg-blue-100'}`}
-                            >
-                                <p className="text-[9px] font-bold text-blue-600 uppercase tracking-tighter">Running</p>
-                                <p className="text-xl font-black text-blue-600">{stats.activeProjects || 0}</p>
-                            </div>
 
-                            <div 
-                                onClick={() => setActiveProjectView("completed")} 
-                                className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'completed' ? 'bg-emerald-100 border-emerald-300 shadow-inner' : 'bg-emerald-50 border-emerald-100 hover:bg-emerald-100'}`}
-                            >
-                                <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
-                                <p className="text-xl font-black text-emerald-600">{stats.completedJobs || 0}</p>
+                        <div onClick={() => navigate('/all-transactions')} className="p-6 bg-white border shadow-sm border-slate-200 rounded-xl cursor-pointer group hover:shadow-xl hover:border-emerald-200 transition-all duration-300 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <FiActivity size={80} />
                             </div>
-
-                            <div 
-                                onClick={() => setActiveProjectView("pending")} 
-                                className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'pending' ? 'bg-amber-100 border-amber-300 shadow-inner' : 'bg-amber-50 border-amber-100 hover:bg-amber-100'}`}
-                            >
-                                <p className="text-[9px] font-bold text-amber-600 uppercase tracking-tighter">Pending</p>
-                                <p className="text-xl font-black text-amber-600">{stats.pendingProjects || 0}</p>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="flex items-center gap-2 text-sm font-black tracking-widest uppercase text-slate-900">
+                                    <FiActivity className="text-emerald-500" /> Spending Overview
+                                </h3>
+                                <FiArrowUpRight className="text-slate-300 group-hover:text-primary transition-all group-hover:translate-x-1" />
                             </div>
-
-                            <div 
-                                onClick={() => setActiveProjectView("all")} 
-                                className={`flex flex-col items-center justify-center p-3 transition-all duration-300 border rounded-lg cursor-pointer group hover:shadow-md active:scale-95 ${activeProjectView === 'all' ? 'bg-slate-200 border-slate-400 shadow-inner' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
-                            >
-                                <p className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">Total</p>
-                                <p className="text-xl font-black text-slate-600">{stats.totalProjects || 0}</p>
+                            <div className="space-y-1">
+                                <p className="text-3xl font-black text-slate-900">Rs. {(stats.monthlyTotal || 0).toLocaleString()}</p>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Investment this period</p>
+                            </div>
+                            <div className="mt-6 flex items-center justify-between">
+                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Financial Audit Ready</span>
+                                <span className="text-[10px] font-bold text-slate-400 hover:text-primary transition-colors">View All Transactions →</span>
                             </div>
                         </div>
-                    </div>
+                    </>
                 )}
 
                 {/* Freelancer Only Metrics */}
                 {role === 'freelancer' && (
                     <>
-                        <div onClick={() => window.location.href = '/all-transactions'} className="p-4 transition-all duration-300 border rounded-lg cursor-pointer group bg-gradient-to-br from-emerald-50 to-white border-emerald-200 hover:shadow-lg hover:scale-105 active:scale-95">
+                        <div onClick={() => navigate('/all-transactions')} className="p-4 transition-all duration-300 border rounded-lg cursor-pointer group bg-gradient-to-br from-emerald-50 to-white border-emerald-200 hover:shadow-lg hover:scale-105 active:scale-95">
                             <div className="flex items-center justify-between mb-2">
                                 <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600">This Month</p>
                                 <FiArrowUpRight className="transition-transform text-emerald-600 group-hover:translate-x-1" size={14} />
@@ -398,18 +422,30 @@ const DashboardAnalytics = ({ role }) => {
                 {/* Financial Chart */}
                 <div className="p-6 transition-shadow duration-300 bg-white border rounded-lg shadow-sm border-slate-200 hover:shadow-md">
                     <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 className="text-base font-black leading-none tracking-wider uppercase text-slate-900">Financial Performance</h3>
+                        <div 
+                            onClick={() => navigate('/all-transactions')}
+                            className="cursor-pointer group/fhead"
+                        >
+                            <h3 className="text-base font-black leading-none tracking-wider uppercase text-slate-900 group-hover/fhead:text-primary transition-colors flex items-center gap-2">
+                                Financial Performance
+                                <FiArrowUpRight className="opacity-0 group-hover/fhead:opacity-100 transition-all group-hover/fhead:translate-x-0.5" />
+                            </h3>
                             <p className="mt-2 text-xs font-medium text-slate-400">{role === 'freelancer' ? 'Your earnings' : 'Your spending'} over time</p>
                         </div>
                         <div className="flex items-center gap-4">
-                             <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200">
+                             <div 
+                                onClick={() => navigate('/all-transactions')}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200 cursor-pointer hover:bg-emerald-100 transition-colors"
+                             >
                                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                 <span className="text-xs font-bold tracking-wider uppercase text-emerald-600">Live Data</span>
+                                 <span className="text-[10px] font-black tracking-wider uppercase text-emerald-600">View Detailed Audit</span>
                              </div>
                         </div>
                     </div>
-                    <div className="p-2 rounded-lg h-80 bg-gradient-to-b from-slate-50/50 to-white">
+                    <div 
+                        onClick={() => navigate('/all-transactions')}
+                        className="p-2 rounded-lg h-80 bg-gradient-to-b from-slate-50/50 to-white cursor-pointer group/chart hover:shadow-inner transition-all"
+                    >
                         {mainChartData.labels.length > 0 ? (
                             role === 'freelancer' ? (
                                 <Line 
@@ -632,11 +668,15 @@ const DashboardAnalytics = ({ role }) => {
                 <div className="space-y-6">
                     {/* Recent Transactions / Activity Feed */}
                     <div className="p-6 transition-all duration-300 bg-white border rounded-lg shadow-md border-slate-200 hover:shadow-lg">
-                        <div className="flex items-center justify-between mb-5">
+                        <div 
+                            onClick={() => navigate('/all-transactions')}
+                            className="flex items-center justify-between mb-5 cursor-pointer group/header"
+                        >
                             <div>
-                                <h3 className="text-lg font-black tracking-wider uppercase text-slate-900">⚡ Activity Feed</h3>
+                                <h3 className="text-lg font-black tracking-wider uppercase text-slate-900 group-hover/header:text-primary transition-colors">⚡ Activity Feed</h3>
                                 <p className="mt-2 text-xs font-medium text-slate-400">Latest updates & submissions</p>
                             </div>
+                            <FiArrowUpRight className="text-slate-300 group-hover/header:text-primary group-hover/header:translate-x-1 transition-all" />
                         </div>
                         
                         <div className="space-y-4 overflow-y-auto max-h-[700px] pr-2 custom-scrollbar">
@@ -731,7 +771,7 @@ const DashboardAnalytics = ({ role }) => {
                                 return (
                                     <div 
                                         key={idx} 
-                                        onClick={() => window.location.href = `/projects-workspace?id=${p.id}`}
+                                        onClick={() => navigate(`/projects-workspace?id=${p.id}`)}
                                         className={`p-5 rounded-2xl ${scheme.bg} border ${scheme.border} hover:shadow-xl transition-all duration-300 cursor-pointer group relative overflow-hidden`}
                                     >
                                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
