@@ -37,11 +37,17 @@ const PostedJobs = ({ showPostJobModalFn }) => {
         return "0.00";
     };
 
-    const filteredJobs = jobs.filter((job) =>
-        selectedFilter === "all" ? true : 
-        selectedFilter === "ongoing" ? ["assigned", "in_progress", "pending_review"].includes(job.status) :
-        job.status === selectedFilter,
-    );
+    const applyStatusFilter = (job) => {
+        if (selectedFilter === "all") return true;
+        if (selectedFilter === "posted") return !job?.acceptedFreelancer;
+        if (selectedFilter === "ongoing") return ["assigned", "in_progress", "pending_review"].includes(job.status);
+        return job.status === selectedFilter;
+    };
+
+    const postedOnlyJobs = jobs.filter((job) => !job?.acceptedFreelancer);
+    const selectedJobs = jobs.filter((job) => Boolean(job?.acceptedFreelancer));
+    const filteredPostedJobs = postedOnlyJobs.filter(applyStatusFilter);
+    const filteredSelectedJobs = selectedJobs.filter(applyStatusFilter);
 
     const statusMap = {
         open: { label: "Recruiting", style: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -59,8 +65,8 @@ const PostedJobs = ({ showPostJobModalFn }) => {
         <div className="space-y-6 font-['Poppins',_sans-serif]">
             {/* Project Summary Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <MetricTile label="Network Reach" value={jobs.length} sub="Total Postings" />
-                <MetricTile label="Active Work" value={jobs.filter(j => ["assigned", "in_progress"].includes(j.status)).length} sub="Current Cycles" />
+                <MetricTile label="Network Reach" value={postedOnlyJobs.length} sub="Open Postings" />
+                <MetricTile label="Active Work" value={selectedJobs.filter(j => ["assigned", "in_progress"].includes(j.status)).length} sub="Selected Cycles" />
                 <MetricTile label="Review Pipeline" value={jobs.filter(j => j.status === "pending_review").length} sub="Awaiting Approval" color="text-amber-600" />
                 <MetricTile label="Portfolio Value" value={`Rs. ${getAvgSpending(jobs)}`} sub="Average Project Cost" />
             </div>
@@ -74,7 +80,7 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                     </div>
 
                     <div className="flex items-center gap-1.5 p-1 bg-slate-50 border border-slate-200 rounded">
-                        {["all", "open", "ongoing", "completed", "closed"].map((filter) => (
+                        {["all", "posted", "open", "ongoing", "completed", "closed"].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setSelectedFilter(filter)}
@@ -90,10 +96,14 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                     </div>
                 </div>
                 
-                {/* Projects Data Table */}
+                {/* Projects Data Sections */}
                 <div className="overflow-x-auto">
+                    <div className="px-6 pt-5 pb-2">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Posted Jobs</h3>
+                        <p className="text-[11px] text-slate-400 mt-1">Only jobs that are posted and not selected yet.</p>
+                    </div>
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50/50 border-b border-slate-100">
+                        <thead className="bg-slate-50/50 border-y border-slate-100">
                             <tr>
                                 <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Name</th>
                                 <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stakeholder</th>
@@ -104,109 +114,71 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredJobs.length === 0 ? (
+                            {filteredPostedJobs.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="py-24 text-center">
+                                    <td colSpan="6" className="py-12 text-center">
                                         <div className="flex flex-col items-center">
-                                            <FiBriefcase className="w-8 h-8 text-slate-200 mb-3" />
-                                            <p className="text-xs font-semibold text-slate-400 italic">No project entities found for the current selection.</p>
+                                            <FiBriefcase className="w-7 h-7 text-slate-200 mb-2" />
+                                            <p className="text-xs font-semibold text-slate-400 italic">No posted jobs in this filter.</p>
                                         </div>
                                     </td>
                                 </tr>
                             ) : (
-                                filteredJobs.map((job) => (
-                                    <tr 
+                                filteredPostedJobs.map((job) => (
+                                    <JobRow
                                         key={job?._id}
-                                        onClick={() => navigate(`/jobs/${job._id}`)}
-                                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{job.title}</p>
-                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">UID: {job._id.slice(-6).toUpperCase()}</p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-[12px] font-semibold text-slate-600 flex items-center gap-2">
-                                                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold">
-                                                    {job?.acceptedFreelancer?.name?.firstName?.charAt(0) || "U"}
-                                                </div>
-                                                <span className="flex flex-col leading-tight">
-                                                    <span>
-                                                        {job?.acceptedFreelancer 
-                                                            ? `${job?.acceptedFreelancer?.name?.firstName} ${job?.acceptedFreelancer?.name?.lastName}`
-                                                            : "Unassigned"}
-                                                    </span>
-                                                </span>
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-[12px] font-bold text-slate-900">Rs. {job.hourlyRate}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-[12px] font-bold text-slate-700">Rs. {calculateCost(job)}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${statusMap[job.status]?.style || "bg-slate-50 text-slate-500 border-slate-200"}`}>
-                                                {statusMap[job.status]?.label || job.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
-                                                {job?.acceptedFreelancer && (
-                                                    <button 
-                                                        onClick={() => setQuickChatUser({ 
-                                                            id: job.acceptedFreelancer?._id, 
-                                                            name: `${job.acceptedFreelancer?.name?.firstName} ${job.acceptedFreelancer?.name?.lastName}` 
-                                                        })}
-                                                        className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded transition-colors"
-                                                        title="Launch Communication"
-                                                    >
-                                                        <FiMessageSquare className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                                
-                                                {job.status === "pending_review" ? (
-                                                    <button
-                                                        disabled={processingId === job._id}
-                                                        onClick={async () => {
-                                                            setProcessingId(job._id);
-                                                            try {
-                                                                await api.patch(`/jobs/${job._id}/client-review`, { status: "completed" });
-                                                                toast.success("Project deliverables approved");
-                                                                fetchPostedJobs();
-                                                            } catch (err) {
-                                                                toast.error("Process execution failed");
-                                                            } finally {
-                                                                setProcessingId(null);
-                                                            }
-                                                        }}
-                                                        className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold hover:brightness-95 transition-all shadow-sm"
-                                                    >
-                                                        {processingId === job._id ? <FiLoader className="animate-spin w-3 h-3" /> : <FiCheckCircle className="w-3 h-3" />}
-                                                        Approve Work
-                                                    </button>
-                                                ) : job.status === "completed" && !job.payment?.done ? (
-                                                    <Link
-                                                        to={`/jobs/${job._id}/pay`}
-                                                        className="flex items-center gap-1.5 px-3 py-1 bg-primary text-white rounded text-[10px] font-bold hover:brightness-95 transition-all shadow-sm"
-                                                    >
-                                                        <FiDollarSign className="w-3 h-3" />
-                                                        Execute Payment
-                                                    </Link>
-                                                ) : ["completed", "paid"].includes(job.status) ? (
-                                                    <div onClick={e => e.stopPropagation()}>
-                                                        <ReviewButton
-                                                            projectId={job._id}
-                                                            onReviewSubmitted={() => {
-                                                                fetchPostedJobs();
-                                                            }}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <FiMoreVertical className="text-slate-300 hover:text-slate-500 cursor-pointer w-4 h-4" />
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        job={job}
+                                        navigate={navigate}
+                                        calculateCost={calculateCost}
+                                        statusMap={statusMap}
+                                        setQuickChatUser={setQuickChatUser}
+                                        processingId={processingId}
+                                        setProcessingId={setProcessingId}
+                                        fetchPostedJobs={fetchPostedJobs}
+                                    />
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+
+                    <div className="px-6 pt-7 pb-2 border-t border-slate-100">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Selected Jobs</h3>
+                        <p className="text-[11px] text-slate-400 mt-1">Jobs where a freelancer has already been selected.</p>
+                    </div>
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-slate-50/50 border-y border-slate-100">
+                            <tr>
+                                <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Name</th>
+                                <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stakeholder</th>
+                                <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rate (NRS)</th>
+                                <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Allocation</th>
+                                <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                                <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {filteredSelectedJobs.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="py-12 text-center">
+                                        <div className="flex flex-col items-center">
+                                            <FiBriefcase className="w-7 h-7 text-slate-200 mb-2" />
+                                            <p className="text-xs font-semibold text-slate-400 italic">No selected jobs in this filter.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredSelectedJobs.map((job) => (
+                                    <JobRow
+                                        key={job?._id}
+                                        job={job}
+                                        navigate={navigate}
+                                        calculateCost={calculateCost}
+                                        statusMap={statusMap}
+                                        setQuickChatUser={setQuickChatUser}
+                                        processingId={processingId}
+                                        setProcessingId={setProcessingId}
+                                        fetchPostedJobs={fetchPostedJobs}
+                                    />
                                 ))
                             )}
                         </tbody>
@@ -235,6 +207,118 @@ const PostedJobs = ({ showPostJobModalFn }) => {
         </div>
     );
 }
+
+const JobRow = ({
+    job,
+    navigate,
+    calculateCost,
+    statusMap,
+    setQuickChatUser,
+    processingId,
+    setProcessingId,
+    fetchPostedJobs,
+}) => (
+    <tr
+        key={job?._id}
+        onClick={() => navigate(`/jobs/${job._id}`)}
+        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+    >
+        <td className="px-6 py-4">
+            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{job.title}</p>
+            <p className="text-[10px] text-slate-400 font-medium mt-0.5">UID: {job._id.slice(-6).toUpperCase()}</p>
+        </td>
+        <td className="px-6 py-4">
+            <span className="text-[12px] font-semibold text-slate-600 flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold">
+                    {job?.acceptedFreelancer?.name?.firstName?.charAt(0) || "U"}
+                </div>
+                <span className="flex flex-col leading-tight">
+                    <span>
+                        {job?.acceptedFreelancer
+                            ? `${job?.acceptedFreelancer?.name?.firstName} ${job?.acceptedFreelancer?.name?.lastName}`
+                            : "Unassigned"}
+                    </span>
+                </span>
+            </span>
+        </td>
+        <td className="px-6 py-4">
+            <span className="text-[12px] font-bold text-slate-900">Rs. {job.hourlyRate}</span>
+        </td>
+        <td className="px-6 py-4">
+            <span className="text-[12px] font-bold text-slate-700">Rs. {calculateCost(job)}</span>
+        </td>
+        <td className="px-6 py-4">
+            <div className="flex flex-col gap-1.5">
+                <span className={`inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border w-fit ${statusMap[job.status]?.style || "bg-slate-50 text-slate-500 border-slate-200"}`}>
+                    {statusMap[job.status]?.label || job.status}
+                </span>
+                {!job?.acceptedFreelancer && (
+                    <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border w-fit bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1">
+                        <FiBriefcase className="w-3 h-3" />
+                        Job Posted
+                    </span>
+                )}
+            </div>
+        </td>
+        <td className="px-6 py-4 text-right">
+            <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                {job?.acceptedFreelancer && (
+                    <button
+                        onClick={() => setQuickChatUser({
+                            id: job.acceptedFreelancer?._id,
+                            name: `${job.acceptedFreelancer?.name?.firstName} ${job.acceptedFreelancer?.name?.lastName}`,
+                        })}
+                        className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded transition-colors"
+                        title="Launch Communication"
+                    >
+                        <FiMessageSquare className="w-4 h-4" />
+                    </button>
+                )}
+
+                {job.status === "pending_review" ? (
+                    <button
+                        disabled={processingId === job._id}
+                        onClick={async () => {
+                            setProcessingId(job._id);
+                            try {
+                                await api.patch(`/jobs/${job._id}/client-review`, { status: "completed" });
+                                toast.success("Project deliverables approved");
+                                fetchPostedJobs();
+                            } catch (err) {
+                                toast.error("Process execution failed");
+                            } finally {
+                                setProcessingId(null);
+                            }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold hover:brightness-95 transition-all shadow-sm"
+                    >
+                        {processingId === job._id ? <FiLoader className="animate-spin w-3 h-3" /> : <FiCheckCircle className="w-3 h-3" />}
+                        Approve Work
+                    </button>
+                ) : job.status === "completed" && !job.payment?.done ? (
+                    <Link
+                        to={`/jobs/${job._id}/pay`}
+                        className="flex items-center gap-1.5 px-3 py-1 bg-primary text-white rounded text-[10px] font-bold hover:brightness-95 transition-all shadow-sm"
+                    >
+                        <FiDollarSign className="w-3 h-3" />
+                        Execute Payment
+                    </Link>
+                ) : ["completed", "paid"].includes(job.status) ? (
+                    <div onClick={e => e.stopPropagation()}>
+                        <ReviewButton
+                            projectId={job._id}
+                            onReviewSubmitted={() => {
+                                fetchPostedJobs();
+                            }}
+                        />
+                    </div>
+                ) : (
+                    <FiMoreVertical className="text-slate-300 hover:text-slate-500 cursor-pointer w-4 h-4" />
+                )}
+            </div>
+        </td>
+    </tr>
+);
 
 const MetricTile = ({ label, value, sub, color = "text-slate-900" }) => (
     <div className="bg-white p-4 rounded border border-slate-200 shadow-sm">

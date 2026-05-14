@@ -84,14 +84,20 @@ function ProjectWorkspace() {
 
     useEffect(() => {
         fetchProjects();
+        // Reset tab for freelancers (they don't see "posted" tab)
+        if (isFreelancer && selectedTab === "posted") {
+            setSelectedTab("ongoing");
+        }
     }, []);
 
     // Filter projects based on tab
     const filteredProjects = projects.filter((project) => {
-        if (selectedTab === "ongoing") {
-            return ["assigned", "in_progress", "pending_review"].includes(
-                project.status
-            );
+        if (selectedTab === "posted") {
+            return !project?.acceptedFreelancer && project.status === "open";
+        } else if (selectedTab === "ongoing") {
+            // Show projects that are either in progress status OR have an accepted freelancer (excluding completed/closed)
+            return (["assigned", "in_progress", "pending_review"].includes(project.status) || 
+                    (project?.acceptedFreelancer && !["open", "completed", "paid", "closed"].includes(project.status)));
         } else if (selectedTab === "completed") {
             return ["completed", "paid"].includes(project.status);
         }
@@ -239,8 +245,10 @@ function ProjectWorkspace() {
                                 {filteredProjects.length}
                             </p>
                             <p className="text-sm text-gray-600">
-                                {selectedTab === "ongoing"
-                                    ? "Ongoing Projects"
+                                {selectedTab === "posted"
+                                    ? "Posted Projects"
+                                    : selectedTab === "ongoing"
+                                    ? "In Progress Projects"
                                     : selectedTab === "completed"
                                     ? "Completed Projects"
                                     : "Total Projects"}
@@ -255,7 +263,8 @@ function ProjectWorkspace() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex gap-8">
                         {[
-                            { id: "ongoing", label: "Ongoing", count: projects.filter((p) => ["assigned", "in_progress", "pending_review"].includes(p.status)).length },
+                            ...(isClient ? [{ id: "posted", label: "Posted", count: projects.filter((p) => !p.acceptedFreelancer && p.status === "open").length }] : []),
+                            { id: "ongoing", label: "In Progress", count: projects.filter((p) => ["assigned", "in_progress", "pending_review"].includes(p.status) || (p?.acceptedFreelancer && !["open", "completed", "paid", "closed"].includes(p.status))).length },
                             { id: "completed", label: "Completed", count: projects.filter((p) => ["completed", "paid"].includes(p.status)).length },
                             { id: "all", label: "All Projects", count: projects.length },
                         ].map((tab) => (
@@ -288,8 +297,16 @@ function ProjectWorkspace() {
                         </h3>
                         <p className="text-gray-600 mb-6">
                             {isClient
-                                ? "Post a new project to get started"
-                                : "Apply for projects to begin"}
+                                ? selectedTab === "posted"
+                                    ? "Post a new project to get started"
+                                    : selectedTab === "ongoing"
+                                    ? "No projects in progress"
+                                    : "No completed projects yet"
+                                : selectedTab === "posted"
+                                ? "No new projects available"
+                                : selectedTab === "ongoing"
+                                ? "Apply for projects to begin"
+                                : "No completed projects yet"}
                         </p>
                     </div>
                 ) : (
@@ -357,6 +374,13 @@ function ProjectWorkspace() {
                                                         <span className="px-3 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 border border-orange-300 shadow-sm inline-flex items-center gap-1">
                                                             <FiClock className="w-3 h-3" />
                                                             In Progress
+                                                        </span>
+                                                    )}
+                                                    
+                                                    {!project?.acceptedFreelancer && (
+                                                        <span className="px-3 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border border-blue-300 shadow-sm inline-flex items-center gap-1">
+                                                            <FiBriefcase className="w-3 h-3" />
+                                                            Job Posted
                                                         </span>
                                                     )}
                                                 </div>

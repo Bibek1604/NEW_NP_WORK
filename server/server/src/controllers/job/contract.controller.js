@@ -152,7 +152,7 @@ export const downloadJobContractPdf = asyncHandler(async (req, res) => {
         throw new ApiError(400, true, "Contract is not available until a freelancer is selected");
     }
 
-    const pdfBuffer = generateContractPdfBuffer({
+    const pdfBuffer = await generateContractPdfBuffer({
         title: `Contract - ${job.title}`,
         lines: buildContractPdfLines({
             job,

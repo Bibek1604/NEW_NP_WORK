@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useFreelancerJobs } from "../../stores";
 import { Loader, NullLoader, QuickChat, ReviewButton } from "../../components";
 import { Link } from "react-router";
-import capitalize from "../../utils/capitalize";
 import { FiMessageSquare, FiPlay, FiLoader, FiCheckCircle } from "react-icons/fi";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
+import { useAuth } from "../../stores";
 
 const FreelancerProjects = () => {
     const { jobs, loading, fetchFreelancerJobs } = useFreelancerJobs();
-    const [selectedFilter, setSelectedFilter] = useState("all");
+    const { userData } = useAuth();
     const [quickChatUser, setQuickChatUser] = useState(null);
     const [ticker, setTicker] = useState(0);
     const [updatingStatus, setUpdatingStatus] = useState(null);
@@ -61,12 +61,9 @@ const FreelancerProjects = () => {
         }
     };
 
-    const filteredJobs = (jobs || []).filter((job) => {
-        if (selectedFilter === "all") return true;
-        if (selectedFilter === "ongoing") return ["contract_pending", "assigned", "in_progress"].includes(job.status);
-        if (selectedFilter === "applied") return job.status === "open";
-        return job.status === selectedFilter;
-    });
+    const isSelectedForCurrentFreelancer = (job) => String(job?.acceptedFreelancer?._id || "") === String(userData?._id || "");
+    const selectedProjects = (jobs || []).filter((job) => isSelectedForCurrentFreelancer(job));
+    const appliedJobs = (jobs || []).filter((job) => !isSelectedForCurrentFreelancer(job));
 
     const statusStyles = {
         open: "bg-green-100 text-green-800",
@@ -91,9 +88,9 @@ const FreelancerProjects = () => {
             {/* Quick Stats Grid for Freelancer */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                    { label: "Ongoing Projects", value: jobs.filter(j => ["contract_pending", "assigned", "in_progress", "pending_review"].includes(j.status)).length, icon: <FiLoader className="w-5 h-5" />, color: "blue" },
-                    { label: "Completed Projects", value: jobs.filter(j => ["completed", "paid"].includes(j.status)).length, icon: <FiCheckCircle className="w-5 h-5" />, color: "emerald" },
-                    { label: "Total Applications", value: jobs.length, icon: <FiMessageSquare className="w-5 h-5" />, color: "amber" }
+                    { label: "Ongoing Projects", value: selectedProjects.filter(j => ["contract_pending", "assigned", "in_progress", "pending_review"].includes(j.status)).length, icon: <FiLoader className="w-5 h-5" />, color: "blue" },
+                    { label: "Completed Projects", value: selectedProjects.filter(j => ["completed", "paid"].includes(j.status)).length, icon: <FiCheckCircle className="w-5 h-5" />, color: "emerald" },
+                    { label: "Applied Jobs", value: appliedJobs.length, icon: <FiMessageSquare className="w-5 h-5" />, color: "amber" }
                 ].map((stat, i) => (
                     <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md group">
                         <div className="flex items-center gap-4">
@@ -113,42 +110,57 @@ const FreelancerProjects = () => {
                 <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                         <h2 className="text-2xl font-black text-gray-900 tracking-tight">Project Workspace</h2>
-                        <p className="text-sm text-gray-400 mt-1">Real-time management of your active contracts.</p>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
-                        {["all", "applied", "ongoing", "pending_review", "completed"].map((filter) => (
-                            <button
-                                key={filter}
-                                onClick={() => setSelectedFilter(filter)}
-                                className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all uppercase tracking-widest ${
-                                    selectedFilter === filter
-                                        ? "bg-white text-primary shadow-sm border border-gray-100"
-                                        : "text-gray-400 hover:text-gray-600"
-                                }`}
-                            >
-                                {filter.replace("_", " ")}
-                            </button>
-                        ))}
+                        <p className="text-sm text-gray-400 mt-1">Selected projects and jobs you have applied to.</p>
                     </div>
                 </div>
 
                 <div className="p-8">
-                    {/* Main Filtered List */}
-                    <div className="grid gap-6">
-                        {filteredJobs.map((job) => (
-                            <ProjectCard 
-                                key={job._id} 
-                                job={job} 
-                                isOngoing={["contract_pending", "assigned", "in_progress", "pending_review"].includes(job.status)}
-                                statusStyles={statusStyles}
-                                getStatusLabel={getStatusLabel}
-                                calculateEarned={calculateEarned}
-                                handleUpdateStatus={handleUpdateStatus}
-                                updatingStatus={updatingStatus}
-                                setQuickChatUser={setQuickChatUser}
-                            />
-                        ))}
+                    <div className="space-y-8">
+                        <div>
+                            <h3 className="text-sm font-black uppercase tracking-widest text-gray-500 mb-4">Selected Projects</h3>
+                            <div className="grid gap-6">
+                                {selectedProjects.length === 0 ? (
+                                    <NullLoader message="No selected projects yet." />
+                                ) : (
+                                    selectedProjects.map((job) => (
+                                        <ProjectCard
+                                            key={job._id}
+                                            job={job}
+                                            isOngoing={["contract_pending", "assigned", "in_progress", "pending_review"].includes(job.status)}
+                                            statusStyles={statusStyles}
+                                            getStatusLabel={getStatusLabel}
+                                            calculateEarned={calculateEarned}
+                                            handleUpdateStatus={handleUpdateStatus}
+                                            updatingStatus={updatingStatus}
+                                            setQuickChatUser={setQuickChatUser}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="text-sm font-black uppercase tracking-widest text-gray-500 mb-4">Applied Jobs</h3>
+                            <div className="grid gap-6">
+                                {appliedJobs.length === 0 ? (
+                                    <NullLoader message="No applied jobs yet." />
+                                ) : (
+                                    appliedJobs.map((job) => (
+                                        <ProjectCard
+                                            key={job._id}
+                                            job={job}
+                                            isOngoing={["contract_pending", "assigned", "in_progress", "pending_review"].includes(job.status)}
+                                            statusStyles={statusStyles}
+                                            getStatusLabel={getStatusLabel}
+                                            calculateEarned={calculateEarned}
+                                            handleUpdateStatus={handleUpdateStatus}
+                                            updatingStatus={updatingStatus}
+                                            setQuickChatUser={setQuickChatUser}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

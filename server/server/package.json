@@ -7,12 +7,20 @@
   "scripts": {
     "dev": "nodemon ./src/index.js",
     "start": "node ./src/index.js",
-    "seed": "node ./src/db/runSeeders.js"
+    "seed": "node ./src/db/runSeeders.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@babel/core": "^7.23.8",
+    "@babel/preset-env": "^7.23.5",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "node-mocks-http": "^1.11.0",
     "nodemon": "^3.1.7"
   },
   "dependencies": {
@@ -26,6 +34,8 @@
     "mongoose": "^8.8.2",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
-    "socket.io": "^4.8.1"
+    "pdfkit": "^0.18.0",
+    "socket.io": "^4.8.1",
+    "svg-to-pdfkit": "^0.1.8"
   }
 }

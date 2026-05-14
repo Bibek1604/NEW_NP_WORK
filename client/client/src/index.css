@@ -113,12 +113,12 @@
 
     /* Gradient text */
     .gradient-text {
-        @apply bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent;
+        @apply text-transparent bg-gradient-to-r from-primary to-emerald-600 bg-clip-text;
     }
 
     /* Elegant divider */
     .divider-elegant {
-        @apply border-t border-gray-100 my-4;
+        @apply my-4 border-t border-gray-100;
     }
 
     /* Focus ring */
@@ -138,7 +138,7 @@
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
+    @apply transition-colors bg-gray-300 rounded-full hover:bg-gray-400;
 }
 
 /* Backdrop blur for modern effect */
