@@ -717,9 +717,6 @@ const DashboardAnalytics = ({ role }) => {
             <div className="p-8 transition-all duration-300 bg-white border shadow-sm border-slate-200 rounded-2xl hover:shadow-md mt-6">
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center text-2xl">
-                            <FiBriefcase />
-                        </div>
                         <div>
                             <h3 className="text-xl font-black tracking-wider uppercase text-slate-900">
                                 {activeProjectView === 'all' ? 'Project Explorer' : `${activeProjectView} Projects`}
@@ -771,13 +768,9 @@ const DashboardAnalytics = ({ role }) => {
                                 return (
                                     <div 
                                         key={idx} 
-                                        onClick={() => navigate(`/projects-workspace?id=${p.id}`)}
+                                        onClick={() => navigate(`/jobs/${p._id || p.id}`)}
                                         className={`p-5 rounded-2xl ${scheme.bg} border ${scheme.border} hover:shadow-xl transition-all duration-300 cursor-pointer group relative overflow-hidden`}
                                     >
-                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                            <FiBriefcase size={64} />
-                                        </div>
-                                        
                                         <div className="relative z-10">
                                             <div className="flex items-center justify-between mb-4">
                                                 <span className={`text-[10px] font-black bg-white px-2 py-1 rounded shadow-sm border border-white/50 uppercase ${scheme.text}`}>
@@ -808,9 +801,6 @@ const DashboardAnalytics = ({ role }) => {
                             })
                     ) : (
                         <div className="col-span-full flex flex-col items-center justify-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md mb-4 text-slate-300 text-3xl">
-                                <FiBriefcase />
-                            </div>
                             <p className="text-lg font-bold text-slate-400 uppercase tracking-widest">No {activeProjectView} projects found</p>
                             <p className="text-xs text-slate-300 mt-2">Adjust your filters or start a new project to see results here.</p>
                         </div>

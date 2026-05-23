@@ -236,38 +236,6 @@ const ProjectCard = ({ job, isOngoing, statusStyles, getStatusLabel, calculateEa
                             <FiMessageSquare className="w-5 h-5" />
                         </button>
 
-                        {/* Status Controls */}
-                        {isOngoing && ["assigned", "in_progress"].includes(job.status) && (
-                            <div className="flex items-center bg-gray-50 border border-gray-100 p-1 rounded-xl shadow-inner overflow-hidden">
-                                <button
-                                    disabled={job.status !== "assigned" || updatingStatus === job._id}
-                                    onClick={(e) => handleUpdateStatus(e, job._id, "in_progress")}
-                                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-                                        job.status === "in_progress"
-                                            ? "bg-blue-600 text-white shadow-md"
-                                            : job.status === "assigned"
-                                            ? "bg-white text-gray-600 hover:text-primary hover:bg-white/50"
-                                            : "text-gray-300 pointer-events-none"
-                                    }`}
-                                >
-                                    {job.status === "assigned" && updatingStatus === job._id ? <FiLoader className="animate-spin" /> : <FiPlay className="w-3 h-3" />}
-                                    {job.status === "in_progress" ? "Working" : "Start"}
-                                </button>
-                                <button
-                                    disabled={job.status !== "in_progress" || updatingStatus === job._id}
-                                    onClick={(e) => handleUpdateStatus(e, job._id, "pending_review")}
-                                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-                                        job.status === "in_progress"
-                                            ? "bg-white text-gray-600 hover:text-teal-600 hover:bg-white/50 shadow-sm"
-                                            : "text-gray-300 pointer-events-none"
-                                    }`}
-                                >
-                                    {updatingStatus === job._id && job.status === "in_progress" ? <FiLoader className="animate-spin" /> : <FiCheckCircle className="w-3 h-3" />}
-                                    Submit
-                                </button>
-                            </div>
-                        )}
-
                         {job.status === "contract_pending" && (
                             <Link
                                 to={`/jobs/${job._id}`}

@@ -7,10 +7,7 @@ import {
     RecentTransactions
 } from "../components";
 import DashboardAnalytics from "../components/DashboardAnalytics";
-import { 
-    FiBriefcase, 
-    FiArrowUpRight
-} from "react-icons/fi";
+import { FiArrowUpRight } from "react-icons/fi";
 import { Link, useNavigate, useSearchParams } from "react-router";
 
 function Dashboard() {
@@ -42,7 +39,7 @@ function Dashboard() {
             <main className="p-6 lg:p-10">
                 <div className="max-w-7xl mx-auto space-y-10">
                     {/* Summary Header */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div className="space-y-1">
                             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight">
                                 Welcome back, <span className="bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent">{userData?.name?.firstName}</span>
@@ -55,7 +52,6 @@ function Dashboard() {
                             to="/projects-workspace"
                             className="flex items-center gap-2 bg-gradient-to-br from-primary/10 to-primary/5 text-primary border border-primary/20 px-6 py-3 rounded-xl font-semibold text-sm hover:border-primary/40 hover:bg-gradient-to-br hover:from-primary/15 hover:to-primary/8 hover:shadow-lg transition-all duration-300 active:scale-[0.98] md:self-auto self-start"
                         >
-                            <FiBriefcase className="w-5 h-5" />
                             Projects Workspace
                         </Link>
                     </div>

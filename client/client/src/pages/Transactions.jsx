@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { Loader } from "../components";
 import TransactionListItem from "../components/TransactionListItem";
 import { useAuth } from "../stores";
-import { FiDownload, FiFilter, FiTrendingUp, FiTrendingDown, FiClock, FiCheckCircle } from "react-icons/fi";
+import { FiFilter, FiTrendingUp, FiTrendingDown, FiClock, FiCheckCircle } from "react-icons/fi";
 import {
     applyTransactionFilters,
     clearTransactionFilters,
@@ -180,9 +180,7 @@ function Transactions() {
                                     {displayedTxns.length}
                                 </span>
                             </div>
-                            <button className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-600">
-                                <FiDownload size={20} />
-                            </button>
+
                         </div>
                     </div>
 

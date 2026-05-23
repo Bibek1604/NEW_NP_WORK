@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import api from "../utils/api";
 import { useAuth } from "../stores";
 import { Loader, ReviewsDisplay } from "../components";
@@ -21,6 +21,8 @@ import capitalize from "../utils/capitalize";
 
 function ProjectWorkspace() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const focusedProjectId = searchParams.get("id");
     const { userData } = useAuth();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -223,6 +225,29 @@ function ProjectWorkspace() {
         approved: "bg-green-500",
         rejected: "bg-red-500",
     };
+
+    const getProjectTab = (project) => {
+        if (isClient && !project?.acceptedFreelancer && project?.status === "open") return "posted";
+        if (["completed", "paid"].includes(project?.status)) return "completed";
+        if (
+            ["assigned", "in_progress", "pending_review"].includes(project?.status) ||
+            (project?.acceptedFreelancer && !["open", "completed", "paid", "closed"].includes(project?.status))
+        ) {
+            return "ongoing";
+        }
+        return "all";
+    };
+
+    useEffect(() => {
+        if (!focusedProjectId || projects.length === 0) return;
+
+        const targetProject = projects.find((project) => String(project._id) === String(focusedProjectId));
+        if (!targetProject) return;
+
+        setSelectedTab(getProjectTab(targetProject));
+        setExpandedProject(targetProject._id);
+        fetchMilestones(targetProject._id);
+    }, [focusedProjectId, projects]);
 
     if (loading) return <Loader />;
 

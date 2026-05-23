@@ -2,14 +2,13 @@ import React, { useEffect, useState } from "react";
 import { usePostedJobs } from "../../stores";
 import Loader from "../Loader";
 import { Link, useNavigate } from "react-router";
-import { 
-    FiMessageSquare, 
-    FiCheckCircle, 
-    FiDollarSign, 
-    FiLoader, 
-    FiBriefcase, 
-    FiPlus, 
+import {
+    FiMessageSquare,
+    FiCheckCircle,
+    FiDollarSign,
+    FiLoader,
     FiMoreVertical,
+    FiBriefcase,
 } from "react-icons/fi";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
@@ -24,10 +23,10 @@ const PostedJobs = ({ showPostJobModalFn }) => {
 
     const fetchPostedJobs = usePostedJobs((state) => state.fetchPostedJobs);
     const loading = usePostedJobs((state) => state.loading);
-    
+
     useEffect(() => {
         fetchPostedJobs();
-    }, []);
+    }, [fetchPostedJobs]);
 
     const calculateCost = (job) => {
         if (job.workedTimeInSec) {
@@ -63,19 +62,17 @@ const PostedJobs = ({ showPostJobModalFn }) => {
 
     return (
         <div className="space-y-6 font-['Poppins',_sans-serif]">
-            {/* Project Summary Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <MetricTile label="Network Reach" value={postedOnlyJobs.length} sub="Open Postings" />
-                <MetricTile label="Active Work" value={selectedJobs.filter(j => ["assigned", "in_progress"].includes(j.status)).length} sub="Selected Cycles" />
-                <MetricTile label="Review Pipeline" value={jobs.filter(j => j.status === "pending_review").length} sub="Awaiting Approval" color="text-amber-600" />
+                <MetricTile label="Active Work" value={selectedJobs.filter((j) => ["assigned", "in_progress"].includes(j.status)).length} sub="Selected Cycles" />
+                <MetricTile label="Review Pipeline" value={jobs.filter((j) => j.status === "pending_review").length} sub="Awaiting Approval" color="text-amber-600" />
                 <MetricTile label="Portfolio Value" value={`Rs. ${getAvgSpending(jobs)}`} sub="Average Project Cost" />
             </div>
 
-            <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
-                {/* Dashboard Controls */}
-                <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="overflow-hidden bg-white border rounded shadow-sm border-slate-200">
+                <div className="flex flex-col justify-between gap-6 px-6 py-5 border-b border-slate-100 lg:flex-row lg:items-center">
                     <div>
-                        <h2 className="text-base font-bold text-slate-900 tracking-tight">Active Projects Portfolio</h2>
+                        <h2 className="text-base font-bold tracking-tight text-slate-900">Active Projects Portfolio</h2>
                         <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-1">Lifecycle Management & Oversight</p>
                     </div>
 
@@ -95,11 +92,10 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                         ))}
                     </div>
                 </div>
-                
-                {/* Projects Data Sections */}
+
                 <div className="overflow-x-auto">
                     <div className="px-6 pt-5 pb-2">
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Posted Jobs</h3>
+                        <h3 className="text-xs font-bold tracking-widest uppercase text-slate-500">Posted Jobs</h3>
                         <p className="text-[11px] text-slate-400 mt-1">Only jobs that are posted and not selected yet.</p>
                     </div>
                     <table className="w-full text-left border-collapse">
@@ -118,8 +114,7 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                                 <tr>
                                     <td colSpan="6" className="py-12 text-center">
                                         <div className="flex flex-col items-center">
-                                            <FiBriefcase className="w-7 h-7 text-slate-200 mb-2" />
-                                            <p className="text-xs font-semibold text-slate-400 italic">No posted jobs in this filter.</p>
+                                            <p className="text-xs italic font-semibold text-slate-400">No posted jobs in this filter.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -141,8 +136,8 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                         </tbody>
                     </table>
 
-                    <div className="px-6 pt-7 pb-2 border-t border-slate-100">
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">Selected Jobs</h3>
+                    <div className="px-6 pb-2 border-t pt-7 border-slate-100">
+                        <h3 className="text-xs font-bold tracking-widest uppercase text-slate-500">Selected Jobs</h3>
                         <p className="text-[11px] text-slate-400 mt-1">Jobs where a freelancer has already been selected.</p>
                     </div>
                     <table className="w-full text-left border-collapse">
@@ -161,8 +156,8 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                                 <tr>
                                     <td colSpan="6" className="py-12 text-center">
                                         <div className="flex flex-col items-center">
-                                            <FiBriefcase className="w-7 h-7 text-slate-200 mb-2" />
-                                            <p className="text-xs font-semibold text-slate-400 italic">No selected jobs in this filter.</p>
+                                            <FiBriefcase className="mb-2 w-7 h-7 text-slate-200" />
+                                            <p className="text-xs italic font-semibold text-slate-400">No selected jobs in this filter.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -185,59 +180,46 @@ const PostedJobs = ({ showPostJobModalFn }) => {
                     </table>
                 </div>
 
-                {/* Grid Management Footer */}
-                <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100">
+                <div className="px-6 py-4 border-t bg-slate-50/50 border-slate-100">
                     <button
                         onClick={() => showPostJobModalFn(true)}
                         className="flex items-center justify-center gap-2 w-full py-2.5 bg-primary text-white rounded text-[12px] font-bold hover:brightness-95 transition-all shadow-sm"
                     >
-                        <FiPlus className="w-4 h-4" />
-                        Initiate New Project Posting
+                        Post New Job
                     </button>
                 </div>
             </div>
 
             {quickChatUser && (
-                <QuickChat 
-                    recipientId={quickChatUser.id} 
-                    recipientName={quickChatUser.name} 
-                    onClose={() => setQuickChatUser(null)} 
+                <QuickChat
+                    recipientId={quickChatUser.id}
+                    recipientName={quickChatUser.name}
+                    onClose={() => setQuickChatUser(null)}
                 />
             )}
         </div>
     );
-}
+};
 
-const JobRow = ({
-    job,
-    navigate,
-    calculateCost,
-    statusMap,
-    setQuickChatUser,
-    processingId,
-    setProcessingId,
-    fetchPostedJobs,
-}) => (
-    <tr
-        key={job?._id}
-        onClick={() => navigate(`/jobs/${job._id}`)}
-        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-    >
+const JobRow = ({ job, navigate, calculateCost, statusMap, setQuickChatUser, processingId, setProcessingId, fetchPostedJobs }) => (
+    <tr className="transition-colors cursor-pointer group hover:bg-slate-50/60" onClick={() => navigate(`/jobs/${job._id}`)}>
         <td className="px-6 py-4">
-            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{job.title}</p>
-            <p className="text-[10px] text-slate-400 font-medium mt-0.5">UID: {job._id.slice(-6).toUpperCase()}</p>
+            <span className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-10 h-10 border rounded-lg bg-slate-50 border-slate-200 text-slate-500">
+                    <FiBriefcase className="w-4 h-4" />
+                </span>
+                <span className="flex flex-col leading-tight">
+                    <span className="text-[12px] font-bold text-slate-900">{job.title || "Untitled Project"}</span>
+                    <span className="text-[10px] text-slate-400">{job?.acceptedFreelancer ? "Selected job" : "Posted job"}</span>
+                </span>
+            </span>
         </td>
         <td className="px-6 py-4">
-            <span className="text-[12px] font-semibold text-slate-600 flex items-center gap-2">
-                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold">
-                    {job?.acceptedFreelancer?.name?.firstName?.charAt(0) || "U"}
-                </div>
-                <span className="flex flex-col leading-tight">
-                    <span>
-                        {job?.acceptedFreelancer
-                            ? `${job?.acceptedFreelancer?.name?.firstName} ${job?.acceptedFreelancer?.name?.lastName}`
-                            : "Unassigned"}
-                    </span>
+            <span className="flex flex-col leading-tight">
+                <span>
+                    {job?.acceptedFreelancer
+                        ? `${job?.acceptedFreelancer?.name?.firstName} ${job?.acceptedFreelancer?.name?.lastName}`
+                        : "Unassigned"}
                 </span>
             </span>
         </td>
@@ -253,15 +235,14 @@ const JobRow = ({
                     {statusMap[job.status]?.label || job.status}
                 </span>
                 {!job?.acceptedFreelancer && (
-                    <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border w-fit bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1">
-                        <FiBriefcase className="w-3 h-3" />
+                    <span className="inline-flex px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border w-fit bg-blue-50 text-blue-700 border-blue-200">
                         Job Posted
                     </span>
                 )}
             </div>
         </td>
         <td className="px-6 py-4 text-right">
-            <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                 {job?.acceptedFreelancer && (
                     <button
                         onClick={() => setQuickChatUser({
@@ -292,19 +273,20 @@ const JobRow = ({
                         }}
                         className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold hover:brightness-95 transition-all shadow-sm"
                     >
-                        {processingId === job._id ? <FiLoader className="animate-spin w-3 h-3" /> : <FiCheckCircle className="w-3 h-3" />}
+                        {processingId === job._id ? <FiLoader className="w-3 h-3 animate-spin" /> : <FiCheckCircle className="w-3 h-3" />}
                         Approve Work
                     </button>
                 ) : job.status === "completed" && !job.payment?.done ? (
                     <Link
                         to={`/jobs/${job._id}/pay`}
                         className="flex items-center gap-1.5 px-3 py-1 bg-primary text-white rounded text-[10px] font-bold hover:brightness-95 transition-all shadow-sm"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <FiDollarSign className="w-3 h-3" />
                         Execute Payment
                     </Link>
                 ) : ["completed", "paid"].includes(job.status) ? (
-                    <div onClick={e => e.stopPropagation()}>
+                    <div onClick={(e) => e.stopPropagation()}>
                         <ReviewButton
                             projectId={job._id}
                             onReviewSubmitted={() => {
@@ -313,7 +295,7 @@ const JobRow = ({
                         />
                     </div>
                 ) : (
-                    <FiMoreVertical className="text-slate-300 hover:text-slate-500 cursor-pointer w-4 h-4" />
+                    <FiMoreVertical className="w-4 h-4 cursor-pointer text-slate-300 hover:text-slate-500" />
                 )}
             </div>
         </td>
@@ -321,7 +303,7 @@ const JobRow = ({
 );
 
 const MetricTile = ({ label, value, sub, color = "text-slate-900" }) => (
-    <div className="bg-white p-4 rounded border border-slate-200 shadow-sm">
+    <div className="p-4 bg-white border rounded shadow-sm border-slate-200">
         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">{label}</p>
         <h3 className={`text-xl font-bold tracking-tight ${color}`}>{value}</h3>
         <p className="text-[10px] text-slate-500 font-medium mt-0.5">{sub}</p>
@@ -331,7 +313,7 @@ const MetricTile = ({ label, value, sub, color = "text-slate-900" }) => (
 function getAvgSpending(jobs) {
     if (!jobs || jobs.length === 0) return "0.00";
     let total = 0;
-    jobs.forEach((element) => total += (element.hourlyRate || 0));
+    jobs.forEach((element) => (total += element.hourlyRate || 0));
     return (total / jobs.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
