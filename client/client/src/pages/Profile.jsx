@@ -11,6 +11,7 @@ import {
     EditTagsModal,
     Loader,
     ReviewsDisplay,
+    ViewCvModal,
 } from "../components";
 import toast from "react-hot-toast";
 import api from "../utils/api";
@@ -34,6 +35,7 @@ function Profile() {
     const [editAboutModal, setEditAboutModal] = useState(false);
     const [editTagsModal, setEditTagsModal] = useState(false);
     const [editCvModal, setEditCvModal] = useState(false);
+    const [viewCvModal, setViewCvModal] = useState(false);
 
     // Redirect if userId is undefined
     useEffect(() => {
@@ -111,6 +113,12 @@ function Profile() {
                     setModalFn={setEditCvModal}
                     profileData={currentProfileData}
                     refetchProfileFn={fetchSetCurrentProfileData}
+                />
+            )}
+            {viewCvModal && (
+                <ViewCvModal
+                    setModalFn={setViewCvModal}
+                    cvUrl={currentProfileData.cv}
                 />
             )}
 
@@ -258,7 +266,10 @@ function Profile() {
                                 </div>
                                 
                                 {currentProfileData.cv ? (
-                                    <div className="relative group overflow-hidden border border-slate-200 rounded-2xl bg-slate-50 transition-all hover:shadow-xl hover:shadow-primary/5">
+                                    <div
+                                        className="relative group overflow-hidden border border-slate-200 rounded-2xl bg-slate-50 transition-all hover:shadow-xl hover:shadow-primary/5 cursor-pointer"
+                                        onClick={() => setViewCvModal(true)}
+                                    >
                                         <div className="block aspect-[3/4] w-full overflow-hidden relative">
                                             <img 
                                                 src={currentProfileData.cv.includes("cloudinary.com") 
@@ -272,6 +283,12 @@ function Profile() {
                                                     e.target.src = "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2070&auto=format&fit=crop";
                                                 }}
                                             />
+                                            <div className="absolute inset-0 bg-slate-900/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                                                <div className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                                                    <FiFileText size={16} />
+                                                    View CV
+                                                </div>
+                                            </div>
                                         </div>
                                         
                                         {/* Info Strip */}
