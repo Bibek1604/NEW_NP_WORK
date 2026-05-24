@@ -1,10 +1,10 @@
 import httpMocks from 'node-mocks-http';
 import mongoose from 'mongoose';
-import { deleteJob } from '../../controllers/deleteJob.controller';
-import { Job } from '../../models/job.model';
-import { ApiError } from '../../utils/index';
+import { deleteJob } from '../../controllers/deleteJob.controller.js';
+import { Job } from '../../models/job.model.js';
+import { ApiError } from '../../utils/index.js';
 
-jest.mock('../../models/job.model');
+jest.mock('../../models/job.model.js');
 
 describe('deleteJob Controller', () => {
   beforeEach(() => {

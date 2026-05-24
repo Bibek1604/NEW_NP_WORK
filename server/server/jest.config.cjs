@@ -11,4 +11,7 @@ module.exports = {
   },
   testPathIgnorePatterns: ['/node_modules/'],
   coveragePathIgnorePatterns: ['/node_modules/'],
+  moduleNameMapper: {
+    '^(\\.\\./.*)\\.js$': '$1',
+  },
 };

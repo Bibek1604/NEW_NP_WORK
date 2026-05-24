@@ -1,13 +1,13 @@
 import httpMocks from 'node-mocks-http';
-import { createJob } from '../../controllers/createJob.controller';
-import { Job } from '../../models/index';
-import { ApiError } from '../../utils/index';
-import { tags } from '../../constants';
+import { createJob } from '../../controllers/createJob.controller.js';
+import { Job } from '../../models/index.js';
+import { ApiError } from '../../utils/index.js';
+import { tags } from '../../constants.js';
 
-jest.mock('../../models/index', () => ({
+jest.mock('../../models/index.js', () => ({
   Job: { create: jest.fn() },
 }));
-jest.mock('../../constants', () => ({
+jest.mock('../../constants.js', () => ({
   tags: ['tag1', 'tag2', 'tag3']
 }));
 

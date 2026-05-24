@@ -1,9 +1,9 @@
 import httpMocks from 'node-mocks-http';
-import { switchRole } from '../../controllers/switchRole.controller';
-import { User } from '../../models/index';
-import { ApiError } from '../../utils/index';
+import { switchRole } from '../../controllers/switchRole.controller.js';
+import { User } from '../../models/index.js';
+import { ApiError } from '../../utils/index.js';
 
-jest.mock('../../models/index', () => ({
+jest.mock('../../models/index.js', () => ({
   User: { findById: jest.fn() }
 }));
 

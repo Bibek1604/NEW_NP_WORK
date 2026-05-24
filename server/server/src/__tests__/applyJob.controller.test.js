@@ -1,10 +1,10 @@
 import httpMocks from 'node-mocks-http';
 import mongoose from 'mongoose';
-import { applyJob } from '../../controllers/applyJob.controller';
-import { Job, JobApplication, User } from '../../models/index';
-import { ApiError } from '../../utils/index';
+import { applyJob } from '../../controllers/applyJob.controller.js';
+import { Job, JobApplication, User } from '../../models/index.js';
+import { ApiError } from '../../utils/index.js';
 
-jest.mock('../../models/index', () => ({
+jest.mock('../../models/index.js', () => ({
   Job: { findById: jest.fn() },
   JobApplication: { findOne: jest.fn(), create: jest.fn() },
   User: { findById: jest.fn() },

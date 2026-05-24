@@ -1,14 +1,14 @@
 import httpMocks from 'node-mocks-http';
 import mongoose from 'mongoose';
-import { updateJob } from '../../controllers/updateJob.controller';
-import { Job } from '../../models/index';
-import { ApiError } from '../../utils/index';
-import { tags } from '../../constants';
+import { updateJob } from '../../controllers/updateJob.controller.js';
+import { Job } from '../../models/index.js';
+import { ApiError } from '../../utils/index.js';
+import { tags } from '../../constants.js';
 
-jest.mock('../../models/index', () => ({
+jest.mock('../../models/index.js', () => ({
   Job: { findOne: jest.fn() }
 }));
-jest.mock('../../constants', () => ({
+jest.mock('../../constants.js', () => ({
   tags: ['tag1', 'tag2', 'tag3']
 }));
 

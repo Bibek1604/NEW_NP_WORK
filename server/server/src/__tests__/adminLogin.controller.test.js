@@ -1,11 +1,11 @@
 import httpMocks from 'node-mocks-http';
-import { adminLogin } from '../../controllers/adminLogin.controller';
-import { User } from '../../models/user.model';
-import { generateAccessToken, generateRefreshToken } from '../../controllers/user.controller';
-import { ApiError } from '../../utils/index';
+import { adminLogin } from '../../controllers/adminLogin.controller.js';
+import { User } from '../../models/user.model.js';
+import { generateAccessToken, generateRefreshToken } from '../../controllers/user.controller.js';
+import { ApiError } from '../../utils/index.js';
 
-jest.mock('../../models/user.model');
-jest.mock('../../controllers/user.controller');
+jest.mock('../../models/user.model.js');
+jest.mock('../../controllers/user.controller.js');
 
 describe('adminLogin Controller', () => {
   beforeEach(() => {

@@ -1,11 +1,11 @@
 import httpMocks from 'node-mocks-http';
 import jwt from 'jsonwebtoken';
-import { generateAccessToken, generateRefreshToken, signup, login } from '../../controllers/user.controller';
-import { User } from '../../models/index';
-import { MailService } from '../../utils/index';
-import { ApiError } from '../../utils/index';
+import { generateAccessToken, generateRefreshToken, signup, login } from '../../controllers/user.controller.js';
+import { User } from '../../models/index.js';
+import { MailService } from '../../utils/index.js';
+import { ApiError } from '../../utils/index.js';
 
-jest.mock('../../models/index', () => ({
+jest.mock('../../models/index.js', () => ({
   User: {
     findById: jest.fn(),
     findOne: jest.fn(),
@@ -13,8 +13,8 @@ jest.mock('../../models/index', () => ({
   }
 }));
 jest.mock('jsonwebtoken');
-jest.mock('../../utils/index', () => ({
-  ...jest.requireActual('../../utils/index'),
+jest.mock('../../utils/index.js', () => ({
+  ...jest.requireActual('../../utils/index.js'),
   MailService: { welcomeMail: jest.fn() }
 }));
 

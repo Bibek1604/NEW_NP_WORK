@@ -1,14 +1,14 @@
 import httpMocks from 'node-mocks-http';
 import mongoose from 'mongoose';
-import { getTransaction } from '../../controllers/getTransaction.controller';
-import { Job } from '../../models/index';
-import { Transaction } from '../../models/transaction.model';
-import { ApiError } from '../../utils/index';
+import { getTransaction } from '../../controllers/getTransaction.controller.js';
+import { Job } from '../../models/index.js';
+import { Transaction } from '../../models/transaction.model.js';
+import { ApiError } from '../../utils/index.js';
 
-jest.mock('../../models/index', () => ({
+jest.mock('../../models/index.js', () => ({
   Job: { findOne: jest.fn() },
 }));
-jest.mock('../../models/transaction.model', () => ({
+jest.mock('../../models/transaction.model.js', () => ({
   Transaction: { create: jest.fn(), findById: jest.fn() },
 }));
 

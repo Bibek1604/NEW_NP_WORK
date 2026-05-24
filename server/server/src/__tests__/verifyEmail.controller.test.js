@@ -1,9 +1,9 @@
 import httpMocks from 'node-mocks-http';
-import { verifyEmail } from '../../controllers/verifyEmail.controller';
-import { User, Otp } from '../../models/index';
-import { ApiError } from '../../utils/index';
+import { verifyEmail } from '../../controllers/verifyEmail.controller.js';
+import { User, Otp } from '../../models/index.js';
+import { ApiError } from '../../utils/index.js';
 
-jest.mock('../../models/index', () => ({
+jest.mock('../../models/index.js', () => ({
   User: { findOne: jest.fn() },
   Otp: { findOne: jest.fn() },
 }));

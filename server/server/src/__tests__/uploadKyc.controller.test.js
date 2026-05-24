@@ -1,17 +1,17 @@
 import httpMocks from 'node-mocks-http';
 import fs from 'fs';
-import { uploadKyc } from '../../controllers/uploadKyc.controller';
-import { User, Kyc } from '../../models/index';
-import { cloudinary } from '../../utils/index';
-import { ApiError } from '../../utils/index';
+import { uploadKyc } from '../../controllers/uploadKyc.controller.js';
+import { User, Kyc } from '../../models/index.js';
+import { cloudinary } from '../../utils/index.js';
+import { ApiError } from '../../utils/index.js';
 
 jest.mock('fs');
-jest.mock('../../models/index', () => ({
+jest.mock('../../models/index.js', () => ({
   User: { findById: jest.fn() },
   Kyc: { findOne: jest.fn(), create: jest.fn() },
 }));
-jest.mock('../../utils/index', () => ({
-  ...jest.requireActual('../../utils/index'),
+jest.mock('../../utils/index.js', () => ({
+  ...jest.requireActual('../../utils/index.js'),
   cloudinary: {
     uploader: {
       upload: jest.fn()

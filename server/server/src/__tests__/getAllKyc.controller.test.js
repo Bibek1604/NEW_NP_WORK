@@ -1,9 +1,9 @@
 import httpMocks from 'node-mocks-http';
-import { getAllKyc } from '../../controllers/getAllKyc.controller';
-import { Kyc } from '../../models/kyc.model';
-import { ApiResponse } from '../../utils/index';
+import { getAllKyc } from '../../controllers/getAllKyc.controller.js';
+import { Kyc } from '../../models/kyc.model.js';
+import { ApiResponse } from '../../utils/index.js';
 
-jest.mock('../../models/kyc.model', () => ({
+jest.mock('../../models/kyc.model.js', () => ({
   Kyc: { find: jest.fn() },
 }));
 
