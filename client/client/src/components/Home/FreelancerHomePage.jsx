@@ -77,70 +77,53 @@ function FreelancerHomePage({ userData }) {
     }, [activeTab, query]);
 
     return (
-        <div className="min-h-screen bg-white pt-20">
+        <div className="min-h-screen pt-20 bg-white">
             <main className="p-6 lg:p-8">
                 <div className="max-w-6xl mx-auto space-y-8">
                     {/* Header Section */}
-                    <div className="space-y-2 mb-6">
-                        <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
+                    <div className="mb-6 space-y-2">
+                        <h1 className="text-3xl font-bold md:text-4xl text-slate-900">
                             🚀 Recommended Projects
                         </h1>
-                        <p className="text-slate-600 text-sm">Projects ranked by how closely they match your profile, tags, and rate.</p>
+                        <p className="text-sm text-slate-600">Projects ranked by how closely they match your profile, tags, and rate.</p>
                     </div>
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 gap-4">
                         {/* Available Projects Card */}
-                        <div className="bg-emerald-50/50 border border-emerald-200/30 rounded-lg p-5 hover:shadow-md hover:border-emerald-200/60 transition-all group">
+                        <div className="p-5 transition-all border rounded-lg bg-emerald-50/50 border-emerald-200/30 hover:shadow-md hover:border-emerald-200/60 group">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
-                                    <FiBriefcase className="text-emerald-600 text-lg" />
+                                <div className="flex items-center justify-center w-12 h-12 transition-colors rounded-lg bg-emerald-500/20 group-hover:bg-emerald-500/30">
+                                    <FiBriefcase className="text-lg text-emerald-600" />
                                 </div>
                                 <span className="text-2xl opacity-20">📱</span>
                             </div>
-                            <h3 className="font-semibold text-slate-700 text-xs mb-1">Available Projects</h3>
+                            <h3 className="mb-1 text-xs font-semibold text-slate-700">Available Projects</h3>
                             <p className="text-3xl font-bold text-slate-900">{jobs.length}</p>
-                            <p className="text-xs text-slate-500 mt-1">Updated live</p>
+                            <p className="mt-1 text-xs text-slate-500">Updated live</p>
                         </div>
                     </div>
 
                     {/* Main Content - Marketplace Grid */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200">
                         {/* Toolbar */}
                         <div className="p-5 border-b border-slate-200 bg-slate-50">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                                 <div>
                                     {query ? (
                                         <div>
-                                            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                            <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
                                                 🔍 Search Results
                                             </h2>
-                                            <p className="text-slate-600 text-xs mt-1">Found <span className="font-semibold text-primary">{jobs.length}</span> projects matching "<span className="font-semibold">{query}</span>"</p>
+                                            <p className="mt-1 text-xs text-slate-600">Found <span className="font-semibold text-primary">{jobs.length}</span> projects matching "<span className="font-semibold">{query}</span>"</p>
                                         </div>
                                     ) : (
                                         <div>
-                                            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                            <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
                                                 📚 Recent Projects
                                             </h2>
                                             <div className="flex gap-2 mt-3">
-                                                <button 
-                                                    onClick={() => setActiveTab("matched")}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs transition ${activeTab === "matched" ? 'bg-primary text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'}`}
-                                                >
-                                                    🔥 For You
-                                                </button>
-                                                <button 
-                                                    onClick={() => setActiveTab("trending")}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs transition ${activeTab === "trending" ? 'bg-primary text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'}`}
-                                                >
-                                                    📈 Trending
-                                                </button>
-                                                <button 
-                                                    onClick={() => setActiveTab("newest")}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-xs transition ${activeTab === "newest" ? 'bg-primary text-white shadow-md' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'}`}
-                                                >
-                                                    ⏰ Newest
-                                                </button>
+                 
                                             </div>
                                         </div>
                                     )}
@@ -148,7 +131,7 @@ function FreelancerHomePage({ userData }) {
                                 {query && (
                                     <button 
                                         onClick={() => setSearchParams({})}
-                                        className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition font-semibold text-xs whitespace-nowrap flex items-center gap-2"
+                                        className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-red-600 transition bg-red-100 rounded-lg hover:bg-red-200 whitespace-nowrap"
                                     >
                                         <FiX className="text-sm" /> Clear
                                     </button>
@@ -163,18 +146,18 @@ function FreelancerHomePage({ userData }) {
                                     <Loader />
                                 </div>
                             ) : jobs.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                                     {jobs.map((item) => (
                                         <JobCard key={item._id || `${item.title}-${item.createdAt || "job"}`} jobData={item} />
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-16">
-                                    <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-4 text-2xl">
+                                <div className="py-16 text-center">
+                                    <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 text-2xl rounded-lg bg-slate-100">
                                         📭
                                     </div>
-                                    <h3 className="text-lg font-bold text-slate-900 mb-2">No Projects Found</h3>
-                                    <p className="text-slate-600 text-sm mb-6 max-w-sm mx-auto">
+                                    <h3 className="mb-2 text-lg font-bold text-slate-900">No Projects Found</h3>
+                                    <p className="max-w-sm mx-auto mb-6 text-sm text-slate-600">
                                         {query 
                                             ? `No projects match "${query}". Try adjusting your search.`
                                             : "No projects available. Check back soon!"}
@@ -182,7 +165,7 @@ function FreelancerHomePage({ userData }) {
                                     {query && (
                                         <button 
                                             onClick={() => setSearchParams({})} 
-                                            className="inline-flex items-center gap-2 px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition font-semibold text-sm"
+                                            className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white transition rounded-lg bg-primary hover:bg-primary/90"
                                         >
                                             🔄 Browse All
                                         </button>

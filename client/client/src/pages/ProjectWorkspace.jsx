@@ -395,7 +395,7 @@ function ProjectWorkspace() {
                                                             <FiAlertCircle className="w-3 h-3" />
                                                             Cancelled
                                                         </span>
-                                                    ) : (
+                                                    ) : (!project?.acceptedFreelancer && project.status === "open") ? null : (
                                                         <span className="px-3 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 border border-orange-300 shadow-sm inline-flex items-center gap-1">
                                                             <FiClock className="w-3 h-3" />
                                                             In Progress
